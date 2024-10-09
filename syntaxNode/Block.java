@@ -8,17 +8,15 @@ import java.util.List;
 public class Block implements BasciNode {
     // Block → '{' { BlockItem } '}'
 
-    private Token _lbrace;
+    private Token lbrace;
     private List<BlockItem> blockItems;
-    private Token _rbrace;
+    private Token rbrace;
 
-    public Block(Token _lbrace, List<BlockItem> blockItems, Token _rbrace) {
-        _lbrace = _lbrace;
+    public Block(Token lbrace, List<BlockItem> blockItems, Token rbrace) {
+        lbrace = lbrace;
         this.blockItems = blockItems;
-        _rbrace = _rbrace;
+        rbrace = rbrace;
     }
-
-
 
     @Override
     public void print() {

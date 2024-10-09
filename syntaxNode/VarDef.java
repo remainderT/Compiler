@@ -6,6 +6,10 @@ public class VarDef implements BasciNode {
     //  VarDef → Ident [ '[' ConstExp ']' ] | Ident [ '[' ConstExp ']' ] '=' InitVal
 
 
+
+
+
+
     @Override
     public void print() {
 

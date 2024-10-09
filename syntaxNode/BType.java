@@ -6,12 +6,10 @@ import frontend.Token;
 public class BType implements BasciNode {
     // BType → 'int' | 'char'
 
-    private Token inttk;
-    private Token chartk;
+    private Token token;
 
-    public BType(Token inttk, Token chartk) {
-        this.inttk = inttk;
-        this.chartk = chartk;
+    public BType(Token token) {
+        this.token = token;
     }
 
     @Override

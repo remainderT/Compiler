@@ -8,12 +8,12 @@ import java.util.List;
 public class AddExp implements BasciNode {
     //  AddExp → MulExp | AddExp ('+' | '−') MulExp
 
-    private List<MulExp> mulExps;
-    private List<Token> _operations;
+    private List<MulExp> mulExps = null;
+    private List<Token> operations = null;
 
-    public AddExp(List<MulExp> mulExpNodes, List<Token> _operations) {
+    public AddExp(List<MulExp> mulExpNodes, List<Token> operations) {
         this.mulExps = mulExpNodes;
-        _operations = _operations;
+        operations = operations;
     }
 
     @Override

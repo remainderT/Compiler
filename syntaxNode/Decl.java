@@ -5,11 +5,14 @@ import common.BasciNode;
 public class Decl implements BasciNode {
     //  Decl → ConstDecl | VarDecl
 
-    private ConstDecl constDecl;
-    private VarDecl varDecl;
+    private ConstDecl constDecl = null;
+    private VarDecl varDecl = null;
 
-    public Decl(ConstDecl constDecl, VarDecl varDecl) {
+    public Decl(ConstDecl constDecl) {
         this.constDecl = constDecl;
+    }
+
+    public Decl(VarDecl varDecl) {
         this.varDecl = varDecl;
     }
 

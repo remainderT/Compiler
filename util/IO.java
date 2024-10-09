@@ -36,7 +36,6 @@ public class IO {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     public static void dealError(String filepath, String message) {

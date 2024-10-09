@@ -6,14 +6,10 @@ import frontend.Token;
 public class FuncType implements BasciNode {
     // FuncType → 'void' | 'int' | 'char'
 
-    private Token voidtk;
-    private Token inttk;
-    private Token chartk;
+    private Token token;
 
-    public FuncType(Token voidtk, Token inttk, Token chartk) {
-        this.voidtk = voidtk;
-        this.inttk = inttk;
-        this.chartk = chartk;
+    public FuncType(Token token) {
+        this.token = token;
     }
 
     @Override
