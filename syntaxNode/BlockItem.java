@@ -8,11 +8,8 @@ public class BlockItem implements BasciNode {
     private Decl decl = null;
     private Stmt stmt = null;
 
-    public BlockItem(Decl decl) {
+    public BlockItem(Decl decl, Stmt stmt) {
         this.decl = decl;
-    }
-
-    public BlockItem(Stmt stmt) {
         this.stmt = stmt;
     }
 

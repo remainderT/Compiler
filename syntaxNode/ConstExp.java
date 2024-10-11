@@ -5,10 +5,10 @@ import common.BasciNode;
 public class ConstExp implements BasciNode {
     // ConstExp → AddExp
 
-    private ConstExp constExp;
+    private AddExp addExp;
 
-    public ConstExp(ConstExp constExp) {
-        this.constExp = constExp;
+    public ConstExp(AddExp addExp) {
+        this.addExp = addExp;
     }
 
     @Override

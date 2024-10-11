@@ -13,12 +13,21 @@ public class PrimaryExp implements BasciNode {
     private Number number;
     private Character character;
 
-    public PrimaryExp(Token lparent, Exp exp, Token rparent, LVal lVal, Number number, Character character) {
+    public PrimaryExp(Token lparent, Exp exp, Token rparent) {
         this.lparent = lparent;
         this.exp = exp;
         this.rparent = rparent;
+    }
+
+    public PrimaryExp(LVal lVal) {
         this.lVal = lVal;
+    }
+
+    public PrimaryExp(Number number) {
         this.number = number;
+    }
+
+    public PrimaryExp(Character character) {
         this.character = character;
     }
 
