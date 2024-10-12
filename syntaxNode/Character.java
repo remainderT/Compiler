@@ -6,10 +6,10 @@ import frontend.Token;
 public class Character implements BasciNode {
     // Character → CharConst
 
-    private Token chrcont;
+    private Token chrcon;
 
-    public Character(Token chrcont) {
-        this.chrcont = chrcont;
+    public Character(Token chrcon) {
+        this.chrcon = chrcon;
     }
 
     @Override

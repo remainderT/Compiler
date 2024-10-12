@@ -19,7 +19,7 @@ public class UnaryExp implements BasciNode {
         this.primaryExp = primaryExp;
     }
 
-    public UnaryExp(FuncFParams funcFParams, Token idenfr, Token lparent, Token rparent) {
+    public UnaryExp(Token idenfr, Token lparent, FuncFParams funcFParams, Token rparent) {
         this.funcFParams = funcFParams;
         this.idenfr = idenfr;
         this.lparent = lparent;
