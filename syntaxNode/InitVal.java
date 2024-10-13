@@ -1,14 +1,18 @@
 package syntaxNode;
 
 import common.BasciNode;
+import common.SyntaxType;
 import frontend.Token;
+import util.IO;
 
 import java.util.List;
+
+import static frontend.Parser.nodeMap;
 
 public class InitVal implements BasciNode {
     // Exp | '{' [ Exp { ',' Exp } ] '}' | StringConst
 
-    private List<Exp> expList;
+    private List<Exp> exps;
     private List<Token> commas;
     private Token lbrace;
     private Token rbrace;
@@ -18,12 +22,12 @@ public class InitVal implements BasciNode {
         this.stringConst = stringConst;
     }
 
-    public InitVal(List<Exp> expList) {
-        this.expList = expList;
+    public InitVal(List<Exp> exps) {
+        this.exps = exps;
     }
 
     public InitVal(List<Exp> expList, List<Token> commas, Token lbrace, Token rbrace) {
-        this.expList = expList;
+        this.exps = expList;
         this.commas = commas;
         this.lbrace = lbrace;
         this.rbrace = rbrace;
@@ -31,6 +35,19 @@ public class InitVal implements BasciNode {
 
     @Override
     public void print() {
-
+        if (stringConst != null) {
+            IO.dealParseOut(stringConst.toString());
+        } else if (lbrace != null) {
+            IO.dealParseOut(lbrace.toString());
+            exps.get(0).print();
+            for (int i=0; i<commas.size(); i++) {
+                IO.dealParseOut(commas.get(i).toString());
+                exps.get(i+1).print();
+            }
+            IO.dealParseOut(rbrace.toString());
+        } else {
+            exps.get(0).print();
+        }
+        IO.dealParseOut(nodeMap.get(SyntaxType.InitVal));
     }
 }

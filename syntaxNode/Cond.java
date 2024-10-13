@@ -1,6 +1,10 @@
 package syntaxNode;
 
 import common.BasciNode;
+import common.SyntaxType;
+import util.IO;
+
+import static frontend.Parser.nodeMap;
 
 public class Cond implements BasciNode {
     // Cond → LOrExp
@@ -13,6 +17,7 @@ public class Cond implements BasciNode {
 
     @Override
     public void print() {
-
+        lOrExp.print();
+        IO.dealParseOut(nodeMap.get(SyntaxType.LOrExp));
     }
 }

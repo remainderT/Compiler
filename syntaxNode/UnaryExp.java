@@ -1,7 +1,11 @@
 package syntaxNode;
 
 import common.BasciNode;
+import common.SyntaxType;
 import frontend.Token;
+import util.IO;
+
+import static frontend.Parser.nodeMap;
 
 public class UnaryExp implements BasciNode {
     // UnaryExp → PrimaryExp | Ident '(' [FuncRParams] ')' | UnaryOp UnaryExp
@@ -31,10 +35,19 @@ public class UnaryExp implements BasciNode {
         this.unaryExp = unaryExp;
     }
 
-
-
     @Override
     public void print() {
-
+        if (primaryExp != null) {
+            primaryExp.print();
+        } else if (idenfr != null) {
+            IO.dealParseOut(idenfr.toString());
+            IO.dealParseOut(lparent.toString());
+            funcFParams.print();
+            IO.dealParseOut(rparent.toString());
+        } else if (unaryOp != null) {
+            IO.dealParseOut(unaryOp.toString());
+            unaryExp.print();
+        }
+        IO.dealParseOut(nodeMap.get(SyntaxType.UnaryExp));
     }
 }

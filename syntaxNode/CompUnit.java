@@ -1,8 +1,12 @@
 package syntaxNode;
 
 import common.BasciNode;
+import common.SyntaxType;
+import util.IO;
 
 import java.util.List;
+
+import static frontend.Parser.nodeMap;
 
 public class CompUnit implements BasciNode {
     // CompUnit → {Decl} {FuncDef} MainFuncDef
@@ -19,6 +23,13 @@ public class CompUnit implements BasciNode {
 
     @Override
     public void print() {
-
+        for (Decl decl : decls) {
+            decl.print();
+        }
+        for (FuncDef funcDef : funcDefs) {
+            funcDef.print();
+        }
+        mainFuncDef.print();
+        IO.dealParseOut(nodeMap.get(SyntaxType.CompUnit));
     }
 }

@@ -1,9 +1,13 @@
 package syntaxNode;
 
 import common.BasciNode;
+import common.SyntaxType;
 import frontend.Token;
+import util.IO;
 
 import java.util.List;
+
+import static frontend.Parser.nodeMap;
 
 public class Block implements BasciNode {
     // Block → '{' { BlockItem } '}'
@@ -13,13 +17,18 @@ public class Block implements BasciNode {
     private Token rbrace;
 
     public Block(Token lbrace, List<BlockItem> blockItems, Token rbrace) {
-        lbrace = lbrace;
+        this.lbrace = lbrace;
         this.blockItems = blockItems;
-        rbrace = rbrace;
+        this.rbrace = rbrace;
     }
 
     @Override
     public void print() {
-
+        IO.dealParseOut(lbrace.toString());
+        for (BlockItem blockItem : blockItems) {
+            blockItem.print();
+        }
+        IO.dealParseOut(rbrace.toString());
+        IO.dealParseOut(nodeMap.get(SyntaxType.Block));
     }
 }

@@ -1,9 +1,13 @@
 package syntaxNode;
 
 import common.BasciNode;
+import common.SyntaxType;
 import frontend.Token;
+import util.IO;
 
 import java.util.List;
+
+import static frontend.Parser.nodeMap;
 
 public class ConstInitVal implements BasciNode {
     //  ConstInitVal → ConstExp | '{' [ ConstExp { ',' ConstExp } ] '}' | StringConst
@@ -31,6 +35,19 @@ public class ConstInitVal implements BasciNode {
 
     @Override
     public void print() {
-
+        if (strcon != null) {
+            IO.dealParseOut(strcon.toString());
+        } else if (lbrace != null) {
+            IO.dealParseOut(lbrace.toString());
+            constExps.get(0).print();
+            for (int i=0; i<commas.size(); i++) {
+                IO.dealParseOut(commas.get(i).toString());
+                constExps.get(i+1).print();
+            }
+            IO.dealParseOut(rbrace.toString());
+        } else {
+            IO.dealParseOut(constExps.get(0).toString());
+        }
+        IO.dealParseOut(nodeMap.get(SyntaxType.ConstInitVal));
     }
 }

@@ -23,6 +23,10 @@ public class Token {
 
     @Override
     public String toString() {
-        return this.getType() + " " + this.getContent();
+        return this.getType() + " " + this.getContent() + "\n";
+    }
+
+    public static Token getNull() {
+        return new Token(TokenType.NULL, "");
     }
 }

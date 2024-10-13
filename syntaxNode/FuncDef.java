@@ -1,7 +1,11 @@
 package syntaxNode;
 
 import common.BasciNode;
+import common.SyntaxType;
 import frontend.Token;
+import util.IO;
+
+import static frontend.Parser.nodeMap;
 
 public class FuncDef implements BasciNode {
     //  FuncDef → FuncType Ident '(' [FuncFParams] ')' Block
@@ -24,6 +28,12 @@ public class FuncDef implements BasciNode {
 
     @Override
     public void print() {
-
+        funcType.print();
+        IO.dealParseOut(idenfr.toString());
+        IO.dealParseOut(lparent.toString());
+        funcFParams.print();
+        IO.dealParseOut(rparent.toString());
+        block.print();
+        IO.dealParseOut(nodeMap.get(SyntaxType.FuncDef));
     }
 }

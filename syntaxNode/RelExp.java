@@ -1,9 +1,13 @@
 package syntaxNode;
 
 import common.BasciNode;
+import common.SyntaxType;
 import frontend.Token;
+import util.IO;
 
 import java.util.List;
+
+import static frontend.Parser.nodeMap;
 
 public class RelExp implements BasciNode {
     // RelExp → AddExp | RelExp ('<' | '>' | '<=' | '>=') AddExp
@@ -18,6 +22,11 @@ public class RelExp implements BasciNode {
 
     @Override
     public void print() {
-
+        addExps.get(0).print();
+        IO.dealParseOut(nodeMap.get(SyntaxType.RelExp));
+        for (int i=0; tokens != null && i < tokens.size(); i++) {
+            IO.dealParseOut(tokens.get(i).toString());
+            addExps.get(i+1).print();
+        }
     }
 }

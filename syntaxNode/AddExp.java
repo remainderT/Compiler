@@ -1,9 +1,13 @@
 package syntaxNode;
 
 import common.BasciNode;
+import common.SyntaxType;
 import frontend.Token;
+import util.IO;
 
 import java.util.List;
+
+import static frontend.Parser.nodeMap;
 
 public class AddExp implements BasciNode {
     //  AddExp → MulExp | AddExp ('+' | '−') MulExp
@@ -18,7 +22,12 @@ public class AddExp implements BasciNode {
 
     @Override
     public void print() {
-
+        mulExps.get(0).print();
+        IO.dealParseOut(nodeMap.get(SyntaxType.AddExp));
+        for (int i = 0; operations != null && i < operations.size(); i++) {
+            IO.dealParseOut(operations.get(i).toString());
+            mulExps.get(i+1).print();
+        }
     }
 }
 

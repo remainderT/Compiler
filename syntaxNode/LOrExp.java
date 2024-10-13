@@ -1,9 +1,13 @@
 package syntaxNode;
 
 import common.BasciNode;
+import common.SyntaxType;
 import frontend.Token;
+import util.IO;
 
 import java.util.List;
+
+import static frontend.Parser.nodeMap;
 
 public class LOrExp implements BasciNode {
     //  LOrExp → LAndExp | LOrExp '||' LAndExp
@@ -18,6 +22,11 @@ public class LOrExp implements BasciNode {
 
     @Override
     public void print() {
-
+        lAndExps.get(0).print();
+        IO.dealParseOut(nodeMap.get(SyntaxType.LOrExp));
+        for (int i=0; orTokens != null && i < orTokens.size(); i++) {
+            IO.dealParseOut(orTokens.get(i).toString());
+            lAndExps.get(i+1).print();
+        }
     }
 }

@@ -1,7 +1,11 @@
 package syntaxNode;
 
 import common.BasciNode;
+import common.SyntaxType;
 import frontend.Token;
+import util.IO;
+
+import static frontend.Parser.nodeMap;
 
 public class FuncFParam implements BasciNode {
     // FuncFParam → BType Ident ['[' ']']
@@ -19,6 +23,10 @@ public class FuncFParam implements BasciNode {
 
     @Override
     public void print() {
-
+        bType.print();
+        IO.dealParseOut(inenfr.toString());
+        IO.dealParseOut(lbrack.toString());
+        IO.dealParseOut(rbrack.toString());
+        IO.dealParseOut(nodeMap.get(SyntaxType.FuncFParam));
     }
 }

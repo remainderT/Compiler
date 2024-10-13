@@ -1,7 +1,11 @@
 package syntaxNode;
 
 import common.BasciNode;
+import common.SyntaxType;
 import frontend.Token;
+import util.IO;
+
+import static frontend.Parser.nodeMap;
 
 public class PrimaryExp implements BasciNode {
     //  PrimaryExp → '(' Exp ')' | LVal | Number | Character
@@ -33,6 +37,17 @@ public class PrimaryExp implements BasciNode {
 
     @Override
     public void print() {
-
+        if (lparent != null) {
+            IO.dealParseOut(lparent.toString());
+            exp.print();
+            IO.dealParseOut(rparent.toString());
+        } else if (lVal != null) {
+            lVal.print();
+        } else if (number != null) {
+            number.print();
+        } else if (character != null) {
+            character.print();
+        }
+        IO.dealParseOut(nodeMap.get(SyntaxType.PrimaryExp));
     }
 }

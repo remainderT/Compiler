@@ -1,7 +1,11 @@
 package syntaxNode;
 
 import common.BasciNode;
+import common.SyntaxType;
 import frontend.Token;
+import util.IO;
+
+import static frontend.Parser.nodeMap;
 
 public class ConstDef implements BasciNode {
     // Ident [ '[' ConstExp ']' ] '=' ConstInitVal
@@ -24,6 +28,12 @@ public class ConstDef implements BasciNode {
 
     @Override
     public void print() {
-
+        IO.dealParseOut(idenfr.toString());
+        IO.dealParseOut(lbrack.toString());
+        constExp.print();
+        IO.dealParseOut(rbrack.toString());
+        IO.dealParseOut(assign.toString());
+        constInitVal.print();
+        IO.dealParseOut(nodeMap.get(SyntaxType.ConstDef));
     }
 }

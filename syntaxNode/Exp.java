@@ -1,6 +1,10 @@
 package syntaxNode;
 
 import common.BasciNode;
+import common.SyntaxType;
+import util.IO;
+
+import static frontend.Parser.nodeMap;
 
 public class Exp implements BasciNode {
     //  Exp → AddExp
@@ -13,6 +17,7 @@ public class Exp implements BasciNode {
 
     @Override
     public void print() {
-
+        addExp.print();
+        IO.dealParseOut(nodeMap.get(SyntaxType.Exp));
     }
 }

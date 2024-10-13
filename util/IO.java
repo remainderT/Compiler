@@ -13,9 +13,32 @@ import java.util.List;
 import java.util.Scanner;
 
 public class IO {
-    public static String dealInput(String filepath) {
+
+    private static String ERROR_PATH;
+    private static String LEXER_PATH;
+    private static String TESTFILE_PATH;
+    private static String PARSER_PATH;
+    private static boolean isFirstWrite = true;
+
+    public static void setErrorPath(String errorPath) {
+        ERROR_PATH = errorPath;
+    }
+
+    public static void setLexerPath(String lexerPath) {
+        LEXER_PATH = lexerPath;
+    }
+
+    public static void setTestfilePath(String testfilePath) {
+        TESTFILE_PATH = testfilePath;
+    }
+
+    public static void setParserPath(String parserPath) {
+        PARSER_PATH = parserPath;
+    }
+
+    public static String dealInput() {
         StringBuilder content = new StringBuilder();
-        File file = new File(filepath);
+        File file = new File(TESTFILE_PATH);
 
         try (Scanner scanner = new Scanner(file)) {
             while (scanner.hasNextLine()) {
@@ -31,19 +54,27 @@ public class IO {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filepath))) {
             for (Token token : tokens) {
                 writer.write(token.toString());
-                writer.newLine(); // 添加换行
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void dealError(String filepath, String message) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filepath, true))) {
+    public static void dealParseOut(String content) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(PARSER_PATH, !isFirstWrite))) {
+            writer.write(content);
+            isFirstWrite = false;  // 第一次写入后将标记设为 false
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void dealError(String message) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(ERROR_PATH, true))) {
             writer.write(message);
             writer.newLine();
         } catch (IOException e) {
-
+            e.printStackTrace();
         }
     }
 }

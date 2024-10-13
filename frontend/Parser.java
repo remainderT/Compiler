@@ -1,12 +1,44 @@
 package frontend;
 
 import common.StmtTpye;
+import common.SyntaxType;
 import common.TokenType;
-import syntaxNode.*;
+import syntaxNode.AddExp;
+import syntaxNode.BType;
+import syntaxNode.Block;
+import syntaxNode.BlockItem;
 import syntaxNode.Character;
+import syntaxNode.CompUnit;
+import syntaxNode.Cond;
+import syntaxNode.ConstDecl;
+import syntaxNode.ConstDef;
+import syntaxNode.ConstExp;
+import syntaxNode.ConstInitVal;
+import syntaxNode.Decl;
+import syntaxNode.EqExp;
+import syntaxNode.Exp;
+import syntaxNode.ForStmt;
+import syntaxNode.FuncDef;
+import syntaxNode.FuncFParam;
+import syntaxNode.FuncFParams;
+import syntaxNode.FuncType;
+import syntaxNode.InitVal;
+import syntaxNode.LAndExp;
+import syntaxNode.LOrExp;
+import syntaxNode.LVal;
+import syntaxNode.MainFuncDef;
+import syntaxNode.MulExp;
 import syntaxNode.Number;
+import syntaxNode.PrimaryExp;
+import syntaxNode.RelExp;
+import syntaxNode.Stmt;
+import syntaxNode.UnaryExp;
+import syntaxNode.UnaryOp;
+import syntaxNode.VarDecl;
+import syntaxNode.VarDef;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Parser {
@@ -16,6 +48,45 @@ public class Parser {
     private Token now;
     private Token preRead;
     private Token prePreRead;
+
+    public static HashMap<SyntaxType, String> nodeMap = new HashMap<>();
+
+    static {
+        nodeMap.put(SyntaxType.AddExp, "<AddExp>");
+        nodeMap.put(SyntaxType.Block, "<Block>");
+        nodeMap.put(SyntaxType.Character, "<Character>");
+        nodeMap.put(SyntaxType.CompUnit, "<CompUnit>");
+        nodeMap.put(SyntaxType.Cond, "<Cond>");
+        nodeMap.put(SyntaxType.ConstDecl, "<ConstDecl>");
+        nodeMap.put(SyntaxType.ConstDef, "<ConstDef>");
+        nodeMap.put(SyntaxType.ConstExp, "<ConstExp>");
+        nodeMap.put(SyntaxType.ConstInitVal, "<ConstInitVal>");
+        nodeMap.put(SyntaxType.EqExp, "<EqExp>");
+        nodeMap.put(SyntaxType.Exp, "<Exp>");
+        nodeMap.put(SyntaxType.ForStmt, "<ForStmt>");
+        nodeMap.put(SyntaxType.FuncDef, "<FuncDef>");
+        nodeMap.put(SyntaxType.FuncFParam, "<FuncFParam>");
+        nodeMap.put(SyntaxType.FuncFParams, "<FuncFParams>");
+        nodeMap.put(SyntaxType.FuncType, "<FuncType>");
+        nodeMap.put(SyntaxType.InitVal, "<InitVal>");
+        nodeMap.put(SyntaxType.LAndExp, "<LAndExp>");
+        nodeMap.put(SyntaxType.LOrExp, "<LOrExp>");
+        nodeMap.put(SyntaxType.LVal, "<LVal>");
+        nodeMap.put(SyntaxType.MainFuncDef, "<MainFuncDef>");
+        nodeMap.put(SyntaxType.MulExp, "<MulExp>");
+        nodeMap.put(SyntaxType.Number, "<Number>");
+        nodeMap.put(SyntaxType.PrimaryExp, "<PrimaryExp>");
+        nodeMap.put(SyntaxType.RelExp, "<RelExp>");
+        nodeMap.put(SyntaxType.Stmt, "<Stmt>");
+        nodeMap.put(SyntaxType.UnaryExp, "<UnaryExp>");
+        nodeMap.put(SyntaxType.UnaryOp, "<UnaryOp>");
+        nodeMap.put(SyntaxType.VarDecl, "<VarDecl>");
+        nodeMap.put(SyntaxType.VarDef, "<VarDef>");
+        for (SyntaxType syntaxType : nodeMap.keySet()) {
+            nodeMap.put(syntaxType, nodeMap.get(syntaxType) + "\n");
+        }
+    }
+
 
     public Parser(List<Token> tokens) {
         this.tokens = tokens;
@@ -218,7 +289,7 @@ public class Parser {
     private BType pBType() {
         // BType → 'int' | 'char'
         BType bType = null;
-        if (now.getType() == TokenType.INTCON || now.getType() == TokenType.CONSTTK) {
+        if (now.getType() == TokenType.INTTK || now.getType() == TokenType.CONSTTK) {
             bType = new BType(now);
             next();
         }
@@ -487,8 +558,7 @@ public class Parser {
         Token breaktk = null;
         Token continuetk = null;
         Token returntk = null;
-        Token getinttk = null;
-        Token getchartk = null;
+        Token getintOrchartk = null;
         Token printtk = null;
         Token lparent = null;
         Token rparent = null;
@@ -530,6 +600,7 @@ public class Parser {
             }
             if (now.getType() == TokenType.SEMICN) {
                 semicn =  now;
+                next();
             }
             return new Stmt(StmtTpye.Return, returntk, exps, semicn);
         } else if (now.getType() == TokenType.PRINTFTK) {  // print
@@ -556,7 +627,7 @@ public class Parser {
                     }
                 }
             }
-            return new Stmt(StmtTpye.Printf, printtk, lparent, exps, commas, rparent, semicn);
+            return new Stmt(StmtTpye.Printf, printtk, lparent, strcon, exps, commas, rparent, semicn);
         } else if (now.getType() == TokenType.IFTK) {   // if
             iftk = now;
             next();
@@ -600,27 +671,93 @@ public class Parser {
             }
             return new Stmt(StmtTpye.For, fortk,lparent, forStmt1, forSemicn1, cond, forSemicn2, forStmt2, rparent, stmt);
         } else {
-/*           LVal '=' Exp ';
+/*           LVal '=' Exp ';'
                   | [Exp] ';'
                   | LVal '=' 'getint''('')'';'
                   | LVal '=' 'getchar''('')'';'
-
 */
-
-
-
-
-
+            boolean isAssign = judge();
+            if (isAssign) {
+                lval = pLVal();
+                if (now.getType() == TokenType.ASSIGN) {
+                    assign = now;
+                    next();
+                    if (now.getType() == TokenType.GETINTTK || now.getType() == TokenType.GETCHARTK) {
+                        boolean isChar = false;
+                        if (now.getType() == TokenType.GETINTTK) {
+                            getintOrchartk = now;
+                            next();
+                        } else if (now.getType() == TokenType.GETCHARTK) {
+                            getintOrchartk = now;
+                            next();
+                            isChar = true;
+                        }
+                        if (now.getType() == TokenType.LPARENT) {
+                            lparent = now;
+                            next();
+                            if (now.getType() == TokenType.RPARENT) {
+                                rparent = now;
+                                next();
+                                if (now.getType() == TokenType.SEMICN) {
+                                    semicn =  now;
+                                    next();
+                                }
+                            }
+                        }   //  LVal '=' 'getint''('')'';'    LVal '=' 'getchar''('')'';'
+                        StmtTpye type = isChar ? StmtTpye.LValAssignGetchar : StmtTpye.LValAssignGetint;
+                        return new Stmt(type, lval, assign, getintOrchartk, lparent, rparent,semicn );
+                    }
+                } else {   // LVal '=' Exp ';'
+                    lval = pLVal();
+                    if (now.getType() == TokenType.ASSIGN) {
+                        assign = now;
+                        next();
+                        exps.add(pExp());
+                        if (now.getType() == TokenType.SEMICN) {
+                            semicn =  now;
+                            next();
+                        }
+                        return new Stmt(StmtTpye.LValAssignExp, lval, assign, exps, semicn);
+                    }
+                }
+            } else {        // [Exp] ';'
+                if (now.getType() != TokenType.SEMICN) {
+                    exps.add(pExp());
+                }
+                if (now.getType() == TokenType.SEMICN) {
+                    semicn =  now;
+                    next();
+                }
+                return new Stmt(StmtTpye.Exp, exps, semicn);
+            }
         }
-
-
         return null;
     }
 
     private Boolean judge() {
-
-
-        return Boolean.FALSE;
+        int index = 0;
+        for (int i=0; i < tokens.size(); i++) {
+            if (tokens.get(i) == now) {
+                index = i;
+            }
+        }
+        int assign = index, semicn = index;
+        for (int i=index; i<tokens.size(); i++) {
+            if (tokens.get(i).getType() == TokenType.ASSIGN) {
+                assign = i;
+                break;
+            }
+        }
+        assign = assign > index ? assign : -1;
+        if (assign == -1)
+            return false;
+        for (int i=index; i<tokens.size(); i++) {
+            if (tokens.get(i).getType() == TokenType.SEMICN) {
+                semicn = i;
+                break;
+            }
+        }
+        return assign < semicn ? true : false;
     }
 
     private Number pNumber() {
@@ -778,9 +915,13 @@ public class Parser {
 
     private void next() {
         index++;
-        now = tokens.get(index);
-        preRead = tokens.get(index+1);
-        prePreRead = tokens.get(index+2);
+        now = index < tokens.size() ? tokens.get(index) : Token.getNull();
+        preRead = index < tokens.size() -1 ? tokens.get(index+1) : Token.getNull();
+        prePreRead = index < tokens.size() - 2 ? tokens.get(index+2) : Token.getNull();
+    }
+
+    public void print() {
+        this.compUnit.print();
     }
 
 }

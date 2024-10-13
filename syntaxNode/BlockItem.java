@@ -15,6 +15,10 @@ public class BlockItem implements BasciNode {
 
     @Override
     public void print() {
-
+        if (decl != null) {
+            decl.print();
+        } else {
+            stmt.print();
+        }
     }
 }

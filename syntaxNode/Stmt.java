@@ -2,9 +2,13 @@ package syntaxNode;
 
 import common.BasciNode;
 import common.StmtTpye;
+import common.SyntaxType;
 import frontend.Token;
+import util.IO;
 
 import java.util.List;
+
+import static frontend.Parser.nodeMap;
 
 public class Stmt implements BasciNode {
 /*    Stmt → LVal '=' Exp ';' // 每种类型的语句都要覆盖
@@ -48,13 +52,13 @@ public class Stmt implements BasciNode {
 
 
     public Stmt(StmtTpye type, List<Exp> exps, Token semicn) {
-        this.type = type;
+        this.type = type;   //  [Exp] ';'
         this.exps = exps;
         this.semicn = semicn;
     }
 
     public Stmt(StmtTpye type,LVal lval, Token assign, List<Exp> exps, Token semicn) {
-        this.type = type;
+        this.type = type;    //   LVal '=' Exp ';'
         this.assign = assign;
         this.exps = exps;
         this.lval = lval;
@@ -62,7 +66,7 @@ public class Stmt implements BasciNode {
     }
 
     public Stmt(StmtTpye type, LVal lval, Token assign,Token getintOrchartktk, Token lparent, Token rparent, Token semicn) {
-        this.type = type;
+        this.type = type;     //  LVal '=' 'getint''('')'';'  |  LVal '=' 'getchar''('')'';'
         this.lval = lval;
         this.getintOrchartk = getintOrchartktk;
         this.assign = assign;
@@ -71,30 +75,29 @@ public class Stmt implements BasciNode {
         this.semicn = semicn;
     }
 
-
-
     public Stmt(StmtTpye type, Block block) {
-        this.block = block;
+        this.block = block;   // Block
         this.type = type;
     }
 
     public Stmt(StmtTpye type, Token breakOrcontinuetk, Token semicn) {
-        this.type = type;
+        this.type = type;      // 'break' ';' | 'continue'
         this.breakOrcontinuetk = breakOrcontinuetk;
         this.semicn = semicn;
     }
 
-    public Stmt(StmtTpye type, Token semicn, List<Exp> exps, Token returntk) {
-        this.type = type;
+    public Stmt(StmtTpye type, Token returntk, List<Exp> exps, Token semicn) {
+        this.type = type;   // 'return' [Exp] ';'
         this.semicn = semicn;
         this.exps = exps;
         this.returntk = returntk;
     }
 
-    public Stmt(StmtTpye type, Token printtk, Token lparent, List<Exp> exps, List<Token> commas, Token rparent, Token semicn) {
-        this.type = type;
+    public Stmt(StmtTpye type, Token printtk, Token lparent, Token strcon, List<Exp> exps, List<Token> commas, Token rparent, Token semicn) {
+        this.type = type;  // 'printf''('StringConst {','Exp}')'';'
         this.printtk = printtk;
         this.lparent = lparent;
+        this.strcon = strcon;
         this.rparent = rparent;
         this.exps = exps;
         this.commas = commas;
@@ -102,7 +105,7 @@ public class Stmt implements BasciNode {
     }
 
     public Stmt(StmtTpye type, Token iftk, Token lparent, Cond cond, Token rparent, Stmt stmt, Token elsetk, Stmt stmtElse) {
-        this.iftk = iftk;
+        this.iftk = iftk;   // 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
         this.lparent = lparent;
         this.rparent = rparent;
         this.cond = cond;
@@ -112,8 +115,9 @@ public class Stmt implements BasciNode {
         this.stmtElse = stmtElse;
     }
 
+
     public Stmt(StmtTpye type,Token fortk, Token lparent,  ForStmt forStmt1, Token forSemicn1, Cond cond, Token forSemicn2, ForStmt forStmt2, Token rparent, Stmt stmt) {
-        this.type = type;
+        this.type = type;      // 'for' '(' [ForStmt] ';' [Cond] ';' [ForStmt] ')' Stmt
         this.fortk = fortk;
         this.lparent = lparent;
         this.forStmt1 = forStmt1;
@@ -127,6 +131,92 @@ public class Stmt implements BasciNode {
 
     @Override
     public void print() {
-
+        switch (type) {
+            case LValAssignExp:  // LVal '=' Exp ';'
+                lval.print();
+                IO.dealParseOut(assign.toString());
+                exps.get(0).print();
+                IO.dealParseOut(semicn.toString());
+                break;
+            case Exp:   // [Exp] ';'
+                if (!exps.isEmpty()) {
+                    exps.get(0).print();
+                }
+                IO.dealParseOut(semicn.toString());
+                break;
+            case Block:  // Block
+                block.print();
+                break;
+            case If:   // 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
+                IO.dealParseOut(iftk.toString());
+                IO.dealParseOut(lparent.toString());
+                cond.print();
+                IO.dealParseOut(rparent.toString());
+                stmt.print();
+                if (elsetk != null) {
+                    IO.dealParseOut(elsetk.toString());
+                    stmtElse.print();
+                }
+                break;
+            case For:  // 'for' '(' [ForStmt] ';' [Cond] ';' [ForStmt] ')' Stmt
+                IO.dealParseOut(fortk.toString());
+                IO.dealParseOut(lparent.toString());
+                if (forStmt1 != null) {
+                    forStmt1.print();
+                }
+                IO.dealParseOut(forSemicn1.toString());
+                if (cond != null) {
+                    cond.print();
+                }
+                IO.dealParseOut(forSemicn2.toString());
+                if (forStmt2 != null) {
+                    forStmt2.print();
+                }
+                IO.dealParseOut(rparent.toString());
+                stmt.print();
+                break;
+            case Break:  // 'break' ';'
+                IO.dealParseOut(breakOrcontinuetk.toString());
+                IO.dealParseOut(semicn.toString());
+            case Continue:  // 'continue' ';'
+                IO.dealParseOut(breakOrcontinuetk.toString());
+                IO.dealParseOut(semicn.toString());
+                break;
+            case Return:  // 'return' [Exp] ';'
+                IO.dealParseOut(returntk.toString());
+                if (!exps.isEmpty()) {
+                    exps.get(0).print();
+                }
+                IO.dealParseOut(semicn.toString());
+                break;
+            case LValAssignGetint:  // LVal '=' 'getint' '(' ')' ';'
+                lval.print();
+                IO.dealParseOut(assign.toString());
+                IO.dealParseOut(getintOrchartk.toString());
+                IO.dealParseOut(lparent.toString());
+                IO.dealParseOut(rparent.toString());
+                IO.dealParseOut(semicn.toString());
+                break;
+            case LValAssignGetchar:   // LVal '=' 'getchar' '(' ')' ';'
+                lval.print();
+                IO.dealParseOut(assign.toString());
+                IO.dealParseOut(getintOrchartk.toString());
+                IO.dealParseOut(lparent.toString());
+                IO.dealParseOut(rparent.toString());
+                IO.dealParseOut(semicn.toString());
+                break;
+            case Printf:  // 'printf''('StringConst {','Exp}')'';'
+                IO.dealParseOut(printtk.toString());
+                IO.dealParseOut(lparent.toString());
+                IO.dealParseOut(strcon.toString());
+                for (int i = 0; i < commas.size(); i++) {
+                    IO.dealParseOut(commas.get(i).toString());
+                    exps.get(i).print();
+                }
+                IO.dealParseOut(rparent.toString());
+                IO.dealParseOut(semicn.toString());
+                break;
+        }
+        IO.dealParseOut(nodeMap.get(SyntaxType.Stmt));
     }
 }

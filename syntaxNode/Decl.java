@@ -18,6 +18,10 @@ public class Decl implements BasciNode {
 
     @Override
     public void print() {
-
+        if (constDecl != null) {
+            constDecl.print();
+        } else {
+            varDecl.print();
+        }
     }
 }

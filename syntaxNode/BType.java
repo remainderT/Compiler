@@ -2,6 +2,7 @@ package syntaxNode;
 
 import common.BasciNode;
 import frontend.Token;
+import util.IO;
 
 public class BType implements BasciNode {
     // BType → 'int' | 'char'
@@ -14,6 +15,6 @@ public class BType implements BasciNode {
 
     @Override
     public void print() {
-
+        IO.dealParseOut(token.toString());
     }
 }
