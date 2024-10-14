@@ -1,6 +1,7 @@
 package frontend;
 
-import common.LexicalException;
+import common.Error;
+import common.ErrorType;
 import common.TokenType;
 
 import java.util.ArrayList;
@@ -9,12 +10,18 @@ import java.util.List;
 
 public class Lexer {
 
+    private String content;
+    private List<Error> errors;
+    private int commentFlag = 0; // 0： 初始  1：单行   2:多行start  3：多行end
+    private int lineNumber = 1;
+
+    public Lexer(String content , List<Error> errors) {
+        this.content = content;
+        this.errors = errors;
+    }
+
     private static HashMap<String, TokenType> tokenMap = new HashMap<>();
-
     private static HashMap<String, TokenType> compareMap = new HashMap<>();
-
-    private static int commentFlag = 0; // 0： 初始  1：单行   2:多行start  3：多行end
-    private static int lineNumber = 1;
 
     static {
         tokenMap.put("main", TokenType.MAINTK);
@@ -42,22 +49,22 @@ public class Lexer {
         compareMap.put("!", TokenType.NOT);
     }
 
-    private static boolean isLetter(char c) {
+    private boolean isLetter(char c) {
         return Character.isLetter(c) || c == '_';
     }
 
-    private static boolean isDigit(char c) {
+    private boolean isDigit(char c) {
         return Character.isDigit(c);
     }
 
-    private static boolean isWhitespace(char c) {
+    private boolean isWhitespace(char c) {
         if (c == '\n') {
             lineNumber++;
         }
         return Character.isWhitespace(c) || c == '\n';
     }
 
-    public static List<Token> analyze(String content) throws Exception{
+    public List<Token> analyze() {
         List<Token> tokens = new ArrayList<>();
         int length = content.length();
         int state = 0;
@@ -73,34 +80,36 @@ public class Lexer {
                         currentToken.append(c);
                         state = 2;
                     } else if (c == '[') {
-                        tokens.add(new Token(TokenType.LBRACK, "["));
+                        tokens.add(new Token(TokenType.LBRACK, "[", lineNumber));
                     } else if (c == ']') {
-                        tokens.add(new Token(TokenType.RBRACK, "]"));
+                        tokens.add(new Token(TokenType.RBRACK, "]", lineNumber));
                     } else if (c == '{') {
-                        tokens.add(new Token(TokenType.LBRACE, "{"));
+                        tokens.add(new Token(TokenType.LBRACE, "{", lineNumber));
                     } else if (c == '}') {
-                        tokens.add(new Token(TokenType.RBRACE, "}"));
+                        tokens.add(new Token(TokenType.RBRACE, "}", lineNumber));
                     } else if (c == ',') {
-                        tokens.add(new Token(TokenType.COMMA, ","));
+                        tokens.add(new Token(TokenType.COMMA, ",", lineNumber));
                     } else if (c == ';') {
-                        tokens.add(new Token(TokenType.SEMICN, ";"));
+                        tokens.add(new Token(TokenType.SEMICN, ";", lineNumber));
                     } else if (c == '(') {
-                        tokens.add(new Token(TokenType.LPARENT, "("));
+                        tokens.add(new Token(TokenType.LPARENT, "(", lineNumber));
                     } else if (c == ')') {
-                        tokens.add(new Token(TokenType.RPARENT, ")"));
+                        tokens.add(new Token(TokenType.RPARENT, ")", lineNumber));
                     } else if (c == '&') {
                         if (content.charAt(i + 1) == '&') {
                             i++;
-                            tokens.add(new Token(TokenType.AND, "&&"));
+                            tokens.add(new Token(TokenType.AND, "&&", lineNumber));
                         } else {
-                            throw new LexicalException(lineNumber + " a");
+                            errors.add(new Error(lineNumber, ErrorType.a));
+                            tokens.add(new Token(TokenType.AND, "&&",  lineNumber));
                         }
                     } else if (c == '|') {
                         if (content.charAt(i + 1) == '|') {
                             i++;
-                            tokens.add(new Token(TokenType.OR, "||"));
+                            tokens.add(new Token(TokenType.OR, "||", lineNumber));
                         } else {
-                            throw new LexicalException(lineNumber + " a");
+                            errors.add(new Error(lineNumber, ErrorType.a));
+                            tokens.add(new Token(TokenType.OR, "||",  lineNumber));
                         }
                     } else if (c == '\'') { // 字符常量
                         char ch = content.charAt(i + 1);
@@ -111,19 +120,19 @@ public class Lexer {
                         } else {
                             tokenValue = content.substring(i+1, i+2);
                         }
-                        tokens.add(new Token(TokenType.CHRCON, '\'' + tokenValue + '\''));
+                        tokens.add(new Token(TokenType.CHRCON, '\'' + tokenValue + '\'', lineNumber));
                         i = i + 2;
                     } else if (c == '"') { // 字符串常量
                         currentToken.append(c);
                         state = 3;
                     } else if (c == '+') {
-                        tokens.add(new Token(TokenType.PLUS, "+"));
+                        tokens.add(new Token(TokenType.PLUS, "+", lineNumber));
                     } else if (c == '-') {
-                        tokens.add(new Token(TokenType.MINU, "-"));
+                        tokens.add(new Token(TokenType.MINU, "-", lineNumber));
                     } else if (c == '*') {
-                        tokens.add(new Token(TokenType.MULT, "*"));
+                        tokens.add(new Token(TokenType.MULT, "*", lineNumber));
                     } else if (c == '%') {
-                        tokens.add(new Token(TokenType.MOD, "%"));
+                        tokens.add(new Token(TokenType.MOD, "%", lineNumber));
                     } else if (isWhitespace(c)) {
                         // 忽略
                     } else if (c == '!' || c == '<' || c == '>' || c == '=') {
@@ -140,7 +149,7 @@ public class Lexer {
                         i--; // 回退一个字符
                         String tokenValue = currentToken.toString();
                         TokenType tokenType = tokenMap.getOrDefault(tokenValue, TokenType.IDENFR);
-                        tokens.add(new Token(tokenType, tokenValue));
+                        tokens.add(new Token(tokenType, tokenValue, lineNumber));
                         currentToken.setLength(0);
                         state = 0;
                     }
@@ -150,7 +159,7 @@ public class Lexer {
                         currentToken.append(c);
                     } else {
                         i--; // 回退一个字符
-                        tokens.add(new Token(TokenType.INTCON, currentToken.toString()));
+                        tokens.add(new Token(TokenType.INTCON, currentToken.toString(), lineNumber));
                         currentToken.setLength(0);
                         state = 0;
                     }
@@ -158,7 +167,7 @@ public class Lexer {
                 case 3: // 字符串
                     currentToken.append(c);
                     if (c == '"') {
-                        tokens.add(new Token(TokenType.STRCON, currentToken.toString()));
+                        tokens.add(new Token(TokenType.STRCON, currentToken.toString(), lineNumber));
                         currentToken.setLength(0);
                         state = 0;
                     }
@@ -171,7 +180,7 @@ public class Lexer {
                     }
                     String tokenValue = currentToken.toString();
                     TokenType tokenType = compareMap.get(tokenValue);
-                    tokens.add(new Token(tokenType, tokenValue));
+                    tokens.add(new Token(tokenType, tokenValue, lineNumber));
                     state = 0;
                     currentToken.setLength(0);
                     break;
@@ -196,7 +205,7 @@ public class Lexer {
                         }
                     } else if (commentFlag == 0){   // 不是注释是除法
                         i--;
-                        tokens.add(new Token(TokenType.DIV, "/"));
+                        tokens.add(new Token(TokenType.DIV, "/", lineNumber));
                         state = 0;
                     }
                     break;

@@ -31,7 +31,9 @@ public class FuncDef implements BasciNode {
         funcType.print();
         IO.dealParseOut(idenfr.toString());
         IO.dealParseOut(lparent.toString());
-        funcFParams.print();
+        if (funcFParams != null) {
+            funcFParams.print();
+        }
         IO.dealParseOut(rparent.toString());
         block.print();
         IO.dealParseOut(nodeMap.get(SyntaxType.FuncDef));

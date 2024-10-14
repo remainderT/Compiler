@@ -2,30 +2,27 @@ package util;
 
 /*输入输出解析*/
 
-import frontend.Token;
+import common.Error;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
 public class IO {
 
     private static String ERROR_PATH;
-    private static String LEXER_PATH;
     private static String TESTFILE_PATH;
     private static String PARSER_PATH;
     private static boolean isFirstWrite = true;
 
     public static void setErrorPath(String errorPath) {
         ERROR_PATH = errorPath;
-    }
-
-    public static void setLexerPath(String lexerPath) {
-        LEXER_PATH = lexerPath;
     }
 
     public static void setTestfilePath(String testfilePath) {
@@ -50,16 +47,6 @@ public class IO {
         return content.toString();
     }
 
-    public static void dealOutput(String filepath, List<Token> tokens) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filepath))) {
-            for (Token token : tokens) {
-                writer.write(token.toString());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static void dealParseOut(String content) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(PARSER_PATH, !isFirstWrite))) {
             writer.write(content);
@@ -69,12 +56,20 @@ public class IO {
         }
     }
 
-    public static void dealError(String message) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(ERROR_PATH, true))) {
-            writer.write(message);
-            writer.newLine();
+    public static void dealError(List<Error> errors) {
+        Collections.sort(errors, new Comparator<Error>() {
+            @Override
+            public int compare(Error e1, Error e2) {
+                return Integer.compare(e1.getLineNumber(), e2.getLineNumber());
+            }
+        });
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(ERROR_PATH, false))) {
+            for (Error error : errors) {
+                writer.write(error.toString());
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
 }

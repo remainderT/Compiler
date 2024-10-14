@@ -26,6 +26,7 @@ public class LAndExp implements BasciNode {
         for (int i=0; addTokens != null && i < addTokens.size(); i++) {
             IO.dealParseOut(addTokens.get(i).toString());
             eqExps.get(i+1).print();
+            IO.dealParseOut(nodeMap.get(SyntaxType.LAndExp));
         }
     }
 }

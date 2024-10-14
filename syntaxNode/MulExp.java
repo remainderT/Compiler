@@ -26,6 +26,7 @@ public class MulExp implements BasciNode {
         for (int i = 0; operators != null && i < operators.size(); i++) {
             IO.dealParseOut(operators.get(i).toString());
             unaryExps.get(i+1).print();
+            IO.dealParseOut(nodeMap.get(SyntaxType.MulExp));
         }
     }
 }

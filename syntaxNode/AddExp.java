@@ -17,7 +17,7 @@ public class AddExp implements BasciNode {
 
     public AddExp(List<MulExp> mulExpNodes, List<Token> operations) {
         this.mulExps = mulExpNodes;
-        operations = operations;
+        this.operations = operations;
     }
 
     @Override
@@ -27,6 +27,7 @@ public class AddExp implements BasciNode {
         for (int i = 0; operations != null && i < operations.size(); i++) {
             IO.dealParseOut(operations.get(i).toString());
             mulExps.get(i+1).print();
+            IO.dealParseOut(nodeMap.get(SyntaxType.AddExp));
         }
     }
 }

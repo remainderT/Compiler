@@ -25,8 +25,10 @@ public class FuncFParam implements BasciNode {
     public void print() {
         bType.print();
         IO.dealParseOut(inenfr.toString());
-        IO.dealParseOut(lbrack.toString());
-        IO.dealParseOut(rbrack.toString());
+        if (lbrack != null) {
+            IO.dealParseOut(lbrack.toString());
+            IO.dealParseOut(rbrack.toString());
+        }
         IO.dealParseOut(nodeMap.get(SyntaxType.FuncFParam));
     }
 }

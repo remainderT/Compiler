@@ -18,6 +18,7 @@ public enum SyntaxType {
     StringConst,
     FuncType,
     FuncFParams,
+    FuncRParams,
     Block,
     FuncFParam,
     BlockItem,

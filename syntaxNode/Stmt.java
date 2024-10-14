@@ -178,6 +178,7 @@ public class Stmt implements BasciNode {
             case Break:  // 'break' ';'
                 IO.dealParseOut(breakOrcontinuetk.toString());
                 IO.dealParseOut(semicn.toString());
+                break;
             case Continue:  // 'continue' ';'
                 IO.dealParseOut(breakOrcontinuetk.toString());
                 IO.dealParseOut(semicn.toString());

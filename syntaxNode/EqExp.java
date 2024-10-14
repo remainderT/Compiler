@@ -27,6 +27,7 @@ public class EqExp implements BasciNode {
         for (int i = 0; i < tokens.size(); i++) {
             IO.dealParseOut(tokens.get(i).toString());
             relExps.get(i+1).print();
+            IO.dealParseOut(nodeMap.get(SyntaxType.EqExp));
         }
     }
 }

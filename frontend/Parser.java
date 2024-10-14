@@ -1,5 +1,7 @@
 package frontend;
 
+import common.Error;
+import common.ErrorType;
 import common.StmtTpye;
 import common.SyntaxType;
 import common.TokenType;
@@ -21,6 +23,7 @@ import syntaxNode.ForStmt;
 import syntaxNode.FuncDef;
 import syntaxNode.FuncFParam;
 import syntaxNode.FuncFParams;
+import syntaxNode.FuncRParams;
 import syntaxNode.FuncType;
 import syntaxNode.InitVal;
 import syntaxNode.LAndExp;
@@ -43,11 +46,20 @@ import java.util.List;
 
 public class Parser {
     private List<Token> tokens;
-    private CompUnit compUnit;
-    int index = 0;
+    private List<Error> errors;
     private Token now;
     private Token preRead;
     private Token prePreRead;
+    private CompUnit compUnit;
+    int index = 0;
+
+    public Parser(List<Token> tokens, List<Error> errors) {
+        this.tokens = tokens;
+        this.errors = errors;
+        now = tokens.get(0);
+        preRead = tokens.get(1);
+        prePreRead = tokens.get(2);
+    }
 
     public static HashMap<SyntaxType, String> nodeMap = new HashMap<>();
 
@@ -82,17 +94,10 @@ public class Parser {
         nodeMap.put(SyntaxType.UnaryOp, "<UnaryOp>");
         nodeMap.put(SyntaxType.VarDecl, "<VarDecl>");
         nodeMap.put(SyntaxType.VarDef, "<VarDef>");
+        nodeMap.put(SyntaxType.FuncRParams, "<FuncRParams>");
         for (SyntaxType syntaxType : nodeMap.keySet()) {
             nodeMap.put(syntaxType, nodeMap.get(syntaxType) + "\n");
         }
-    }
-
-
-    public Parser(List<Token> tokens) {
-        this.tokens = tokens;
-        now = tokens.get(0);
-        preRead = tokens.get(1);
-        prePreRead = tokens.get(2);
     }
 
     public void analyze() {
@@ -157,6 +162,8 @@ public class Parser {
         if (now.getType() == TokenType.RPARENT) {
             rparent = now;
             next();
+        } else {
+            errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.j));
         }
         block = pBlock();
         return new FuncDef(funcType, idenfr, lparent, funcFParams, rparent, block);
@@ -177,7 +184,6 @@ public class Parser {
         return new FuncFParams(funcFParams, commas);
     }
 
-
     private FuncFParam pFuncFParam() {
         // FuncFParam → BType Ident ['[' ']']
         BType bType = null;
@@ -196,6 +202,8 @@ public class Parser {
             if (now.getType() == TokenType.RBRACK) {
                 rbrack = now;
                 next();
+            } else {
+                errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.k));
             }
         }
         return new FuncFParam(bType, idenfr, lbrack, rbrack);
@@ -234,6 +242,8 @@ public class Parser {
         if (now.getType() == TokenType.RPARENT) {
             rparent = now;
             next();
+        } else {
+            errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.j));
         }
         block = pBlock();
         return new MainFuncDef(inttk, maintk, lparent, rparent, block);
@@ -261,6 +271,8 @@ public class Parser {
         if (now.getType() == TokenType.SEMICN) {
             semicn = now;
             next();
+        } else {
+            errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.i));
         }
         return new ConstDecl(consttk, bType, constDefs, commas, semicn);
     }
@@ -282,6 +294,8 @@ public class Parser {
         if (now.getType() == TokenType.SEMICN) {
             semicn = now;
             next();
+        } else {
+            errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.i));
         }
         return new VarDecl(bType, varDefs, commas, semicn);
     }
@@ -289,7 +303,7 @@ public class Parser {
     private BType pBType() {
         // BType → 'int' | 'char'
         BType bType = null;
-        if (now.getType() == TokenType.INTTK || now.getType() == TokenType.CONSTTK) {
+        if (now.getType() == TokenType.INTTK || now.getType() == TokenType.CHARTK) {
             bType = new BType(now);
             next();
         }
@@ -312,11 +326,13 @@ public class Parser {
         if (now.getType() == TokenType.LBRACK) {
             lbrack = now;
             next();
-        }
-        constExp = pConstExp();
-        if (now.getType() == TokenType.RBRACK) {
-            rbrack = now;
-            next();
+            constExp = pConstExp();
+            if (now.getType() == TokenType.RBRACK) {
+                rbrack = now;
+                next();
+            } else {
+                errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.k));
+            }
         }
         if (now.getType() == TokenType.ASSIGN) {
             assign = now;
@@ -346,6 +362,8 @@ public class Parser {
             if (now.getType() == TokenType.RBRACK) {
                 rbrack = now;
                 next();
+            } else {
+                errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.k));
             }
         }
         if (now.getType() == TokenType.ASSIGN) {
@@ -401,7 +419,7 @@ public class Parser {
         PrimaryExp primaryExp = null;
         Token idenfr = null;
         Token lparent = null;
-        FuncFParams funcFParams = null;
+        FuncRParams funcRParams = null;
         Token rparent = null;
         UnaryOp unaryOp = null;
         UnaryExp unaryExp = null;
@@ -409,13 +427,20 @@ public class Parser {
         if (now.getType() == TokenType.IDENFR && preRead.getType() == TokenType.LPARENT) {
             idenfr = now;
             next();
-            lparent = now;
-            funcFParams = pFuncFParams();
+            if (now.getType() == TokenType.LPARENT) {
+                lparent = now;
+                next();
+            }
+            if (now.getType() != TokenType.RPARENT) {
+                funcRParams = pFuncRParams();
+            }
             if (now.getType() == TokenType.RPARENT) {
                 rparent = now;
                 next();
+            } else {
+                errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.j));
             }
-            return new UnaryExp(idenfr, lparent, funcFParams, rparent);
+            return new UnaryExp(idenfr, lparent, funcRParams, rparent);
         } else if (now.getType() == TokenType.PLUS || now.getType() == TokenType.MINU || now.getType() == TokenType.NOT) {
             unaryOp = pUnaryOp();
             unaryExp = pUnaryExp();
@@ -424,6 +449,19 @@ public class Parser {
             primaryExp = pPrimaryExp();
             return new UnaryExp(primaryExp);
         }
+    }
+
+    private FuncRParams pFuncRParams() {
+       //  FuncRParams → Exp { ',' Exp }
+        List<Exp> exps = new ArrayList<>();
+        List<Token> commas = new ArrayList<>();
+        exps.add(pExp());
+        while (now.getType() == TokenType.COMMA) {
+            commas.add(now);
+            next();
+            exps.add(pExp());
+        }
+        return new FuncRParams(exps, commas);
     }
 
     private UnaryOp pUnaryOp() {
@@ -454,7 +492,9 @@ public class Parser {
         } else if (now.getType() == TokenType.LBRACE) {
             lbrace = now;
             next();
-            constExps.add(pConstExp());
+            if (now.getType() != TokenType.RBRACE) {
+                constExps.add(pConstExp());
+            }
             while (now.getType() == TokenType.COMMA) {
                 commas.add(now);
                 next();
@@ -467,7 +507,6 @@ public class Parser {
         }
         return new ConstInitVal(constExps, commas, lbrace, rbrace);
     }
-
 
     private InitVal pInitVal() {
         // InitVal → Exp | '{' [ Exp { ',' Exp } ] '}' | StringConst
@@ -526,7 +565,7 @@ public class Parser {
         Decl decl = null;
         Stmt stmt = null;
 
-        if (now.getType() == TokenType.INTTK || now.getType() == TokenType.CONSTTK) {
+        if (now.getType() == TokenType.INTTK || now.getType() == TokenType.CHARTK || now.getType() == TokenType.CONSTTK) {
             decl = pDecl();
         } else {
             stmt = pStmt();
@@ -582,6 +621,8 @@ public class Parser {
             if (now.getType() == TokenType.SEMICN) {
                 semicn =  now;
                 next();
+            } else {
+                errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.i));
             }
             return new Stmt(StmtTpye.Break, breaktk, semicn);
         } else if (now.getType() == TokenType.CONTINUETK) {   // continue
@@ -590,6 +631,8 @@ public class Parser {
             if (now.getType() == TokenType.SEMICN) {
                 semicn =  now;
                 next();
+            } else {
+                errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.i));
             }
             return new Stmt(StmtTpye.Continue, continuetk, semicn);
         } else if (now.getType() == TokenType.RETURNTK) {  // return
@@ -601,6 +644,8 @@ public class Parser {
             if (now.getType() == TokenType.SEMICN) {
                 semicn =  now;
                 next();
+            } else {
+                errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.i));
             }
             return new Stmt(StmtTpye.Return, returntk, exps, semicn);
         } else if (now.getType() == TokenType.PRINTFTK) {  // print
@@ -623,7 +668,11 @@ public class Parser {
                         if (now.getType() == TokenType.SEMICN) {
                             semicn =  now;
                             next();
+                        } else {
+                            errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.i));
                         }
+                    } else {
+                        errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.j));
                     }
                 }
             }
@@ -639,6 +688,8 @@ public class Parser {
                     rparent = now;
                     next();
                     stmt = pStmt();
+                } else {
+                    errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.j));
                 }
                 if (now.getType() == TokenType.ELSETK) {
                     elsetk = now;
@@ -652,23 +703,30 @@ public class Parser {
             next();
             if (now.getType() == TokenType.LPARENT) {
                 lparent = now;
-                forStmt1 = pForStmt();
-                if (now.getType() == TokenType.SEMICN) {
-                    forSemicn1 = now;
-                    next();
-                    cond = pCond();
-                    if (now.getType() == TokenType.SEMICN) {
-                        forSemicn2 = now;
-                        next();
-                        forStmt2 = pForStmt();
-                        if (now.getType() == TokenType.RPARENT) {
-                            rparent = now;
-                            next();
-                            stmt = pStmt();
-                        }
-                    }
-                }
+                next();
             }
+            if (now.getType() != TokenType.SEMICN) {
+                forStmt1 = pForStmt();
+            }
+            if (now.getType() == TokenType.SEMICN) {
+                forSemicn1 = now;
+                next();
+            }
+            if (now.getType() != TokenType.SEMICN) {
+                cond = pCond();
+            }
+            if (now.getType() == TokenType.SEMICN) {
+                forSemicn2 = now;
+                next();
+            }
+            if (now.getType() != TokenType.RPARENT) {
+                forStmt2 = pForStmt();
+            }
+            if (now.getType() == TokenType.RPARENT) {
+                rparent = now;
+                next();
+            }
+            stmt = pStmt();
             return new Stmt(StmtTpye.For, fortk,lparent, forStmt1, forSemicn1, cond, forSemicn2, forStmt2, rparent, stmt);
         } else {
 /*           LVal '=' Exp ';'
@@ -682,56 +740,58 @@ public class Parser {
                 if (now.getType() == TokenType.ASSIGN) {
                     assign = now;
                     next();
-                    if (now.getType() == TokenType.GETINTTK || now.getType() == TokenType.GETCHARTK) {
-                        boolean isChar = false;
-                        if (now.getType() == TokenType.GETINTTK) {
-                            getintOrchartk = now;
-                            next();
-                        } else if (now.getType() == TokenType.GETCHARTK) {
-                            getintOrchartk = now;
-                            next();
-                            isChar = true;
-                        }
-                        if (now.getType() == TokenType.LPARENT) {
-                            lparent = now;
-                            next();
-                            if (now.getType() == TokenType.RPARENT) {
-                                rparent = now;
-                                next();
-                                if (now.getType() == TokenType.SEMICN) {
-                                    semicn =  now;
-                                    next();
-                                }
-                            }
-                        }   //  LVal '=' 'getint''('')'';'    LVal '=' 'getchar''('')'';'
-                        StmtTpye type = isChar ? StmtTpye.LValAssignGetchar : StmtTpye.LValAssignGetint;
-                        return new Stmt(type, lval, assign, getintOrchartk, lparent, rparent,semicn );
-                    }
-                } else {   // LVal '=' Exp ';'
-                    lval = pLVal();
-                    if (now.getType() == TokenType.ASSIGN) {
-                        assign = now;
-                        next();
-                        exps.add(pExp());
-                        if (now.getType() == TokenType.SEMICN) {
-                            semicn =  now;
-                            next();
-                        }
-                        return new Stmt(StmtTpye.LValAssignExp, lval, assign, exps, semicn);
-                    }
                 }
-            } else {        // [Exp] ';'
+                if (now.getType() == TokenType.GETINTTK || now.getType() == TokenType.GETCHARTK) {
+                    boolean isChar = false;             //  LVal '=' 'getint''('')'';'    LVal '=' 'getchar''('')'';'
+                    if (now.getType() == TokenType.GETINTTK) {
+                        getintOrchartk = now;
+                        next();
+                    } else if (now.getType() == TokenType.GETCHARTK) {
+                        getintOrchartk = now;
+                        next();
+                        isChar = true;
+                    }
+                    if (now.getType() == TokenType.LPARENT) {
+                        lparent = now;
+                        next();
+                    }
+                    if (now.getType() == TokenType.RPARENT) {
+                        rparent = now;
+                        next();
+                    } else {
+                        errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.j));
+                    }
+                    if (now.getType() == TokenType.SEMICN) {
+                        semicn =  now;
+                        next();
+                    } else {
+                        errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.i));
+                    }
+                    StmtTpye type = isChar ? StmtTpye.LValAssignGetchar : StmtTpye.LValAssignGetint;
+                    return new Stmt(type, lval, assign, getintOrchartk, lparent, rparent,semicn );
+                } else {   // LVal '=' Exp ';'
+                    exps.add(pExp());
+                    if (now.getType() == TokenType.SEMICN) {
+                        semicn =  now;
+                        next();
+                    } else {
+                        errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.i));
+                    }
+                    return new Stmt(StmtTpye.LValAssignExp, lval, assign, exps, semicn);
+                }
+            } else {                    // [Exp] ';'
                 if (now.getType() != TokenType.SEMICN) {
                     exps.add(pExp());
                 }
                 if (now.getType() == TokenType.SEMICN) {
                     semicn =  now;
                     next();
+                } else {
+                    errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.i));
                 }
                 return new Stmt(StmtTpye.Exp, exps, semicn);
             }
         }
-        return null;
     }
 
     private Boolean judge() {
@@ -878,6 +938,8 @@ public class Parser {
             if (now.getType() == TokenType.RBRACK) {
                 rbrack = now;
                 next();
+            } else {
+                errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.k));
             }
         }
         return new LVal(idenfr, lbrack, exp, rbrack);
@@ -899,12 +961,14 @@ public class Parser {
             if (now.getType() == TokenType.RPARENT) {
                 rparent = now;
                 next();
+            } else {
+                errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.j));
             }
             return new PrimaryExp(lparent, exp, rparent);
         } else if (now.getType() == TokenType.INTCON) {
             number = pNumber();
             return new PrimaryExp(number);
-        } else if (now.getType() == TokenType.CONSTTK) {
+        } else if (now.getType() == TokenType.CHRCON) {
             character = pCharacter();
             return new PrimaryExp(character);
         } else {

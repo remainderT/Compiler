@@ -39,14 +39,16 @@ public class ConstInitVal implements BasciNode {
             IO.dealParseOut(strcon.toString());
         } else if (lbrace != null) {
             IO.dealParseOut(lbrace.toString());
-            constExps.get(0).print();
-            for (int i=0; i<commas.size(); i++) {
+            if (!constExps.isEmpty()) {
+                constExps.get(0).print();
+            }
+            for (int i=0; commas != null && i<commas.size(); i++) {
                 IO.dealParseOut(commas.get(i).toString());
                 constExps.get(i+1).print();
             }
             IO.dealParseOut(rbrace.toString());
         } else {
-            IO.dealParseOut(constExps.get(0).toString());
+            constExps.get(0).print();
         }
         IO.dealParseOut(nodeMap.get(SyntaxType.ConstInitVal));
     }

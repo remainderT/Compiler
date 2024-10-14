@@ -22,7 +22,6 @@ public class LVal implements BasciNode {
         this.rbrack = rbrack;
     }
 
-
     @Override
     public void print() {
         IO.dealParseOut(idenfr.toString());

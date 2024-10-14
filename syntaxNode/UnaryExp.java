@@ -13,7 +13,7 @@ public class UnaryExp implements BasciNode {
     private PrimaryExp primaryExp = null;
     private Token idenfr = null;
     private Token lparent = null;
-    private FuncFParams funcFParams = null;
+    private FuncRParams funcRParams = null;
     private Token rparent = null;
     private UnaryOp unaryOp = null;
     private UnaryExp unaryExp = null;
@@ -23,8 +23,8 @@ public class UnaryExp implements BasciNode {
         this.primaryExp = primaryExp;
     }
 
-    public UnaryExp(Token idenfr, Token lparent, FuncFParams funcFParams, Token rparent) {
-        this.funcFParams = funcFParams;
+    public UnaryExp(Token idenfr, Token lparent, FuncRParams funcRParams, Token rparent) {
+        this.funcRParams = funcRParams;
         this.idenfr = idenfr;
         this.lparent = lparent;
         this.rparent = rparent;
@@ -42,10 +42,12 @@ public class UnaryExp implements BasciNode {
         } else if (idenfr != null) {
             IO.dealParseOut(idenfr.toString());
             IO.dealParseOut(lparent.toString());
-            funcFParams.print();
+            if (funcRParams != null) {
+                funcRParams.print();
+            }
             IO.dealParseOut(rparent.toString());
         } else if (unaryOp != null) {
-            IO.dealParseOut(unaryOp.toString());
+            unaryOp.print();
             unaryExp.print();
         }
         IO.dealParseOut(nodeMap.get(SyntaxType.UnaryExp));

@@ -8,9 +8,12 @@ public class Token {
 
     private String content;
 
-    public Token(TokenType type, String content) {
+    private int lineNumber;
+
+    public Token(TokenType type, String content, int lineNumber) {
         this.type = type;
         this.content = content;
+        this.lineNumber = lineNumber;
     }
 
     public TokenType getType() {
@@ -21,12 +24,14 @@ public class Token {
         return this.content;
     }
 
+    public int getLineNumber() { return this.lineNumber; }
+
     @Override
     public String toString() {
         return this.getType() + " " + this.getContent() + "\n";
     }
 
     public static Token getNull() {
-        return new Token(TokenType.NULL, "");
+        return new Token(TokenType.NULL, "", 0);
     }
 }

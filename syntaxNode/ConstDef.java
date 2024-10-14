@@ -29,9 +29,11 @@ public class ConstDef implements BasciNode {
     @Override
     public void print() {
         IO.dealParseOut(idenfr.toString());
-        IO.dealParseOut(lbrack.toString());
-        constExp.print();
-        IO.dealParseOut(rbrack.toString());
+        if (lbrack != null) {
+            IO.dealParseOut(lbrack.toString());
+            constExp.print();
+            IO.dealParseOut(rbrack.toString());
+        }
         IO.dealParseOut(assign.toString());
         constInitVal.print();
         IO.dealParseOut(nodeMap.get(SyntaxType.ConstDef));
