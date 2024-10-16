@@ -18,6 +18,6 @@ public class ConstExp implements BasciNode {
     @Override
     public void print() {
         addExp.print();
-        IO.dealParseOut(nodeMap.get(SyntaxType.ConstExp));
+        IO.dealSyntax(nodeMap.get(SyntaxType.ConstExp));
     }
 }

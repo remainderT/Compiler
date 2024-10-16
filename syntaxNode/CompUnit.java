@@ -30,6 +30,6 @@ public class CompUnit implements BasciNode {
             funcDef.print();
         }
         mainFuncDef.print();
-        IO.dealParseOut(nodeMap.get(SyntaxType.CompUnit));
+        IO.dealSyntax(nodeMap.get(SyntaxType.CompUnit));
     }
 }

@@ -23,11 +23,11 @@ public class RelExp implements BasciNode {
     @Override
     public void print() {
         addExps.get(0).print();
-        IO.dealParseOut(nodeMap.get(SyntaxType.RelExp));
+        IO.dealSyntax(nodeMap.get(SyntaxType.RelExp));
         for (int i=0; tokens != null && i < tokens.size(); i++) {
-            IO.dealParseOut(tokens.get(i).toString());
+            IO.dealSyntax(tokens.get(i).toString());
             addExps.get(i+1).print();
-            IO.dealParseOut(nodeMap.get(SyntaxType.RelExp));
+            IO.dealSyntax(nodeMap.get(SyntaxType.RelExp));
         }
     }
 }

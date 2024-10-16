@@ -18,6 +18,6 @@ public class Cond implements BasciNode {
     @Override
     public void print() {
         lOrExp.print();
-        IO.dealParseOut(nodeMap.get(SyntaxType.Cond));
+        IO.dealSyntax(nodeMap.get(SyntaxType.Cond));
     }
 }

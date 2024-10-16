@@ -40,16 +40,16 @@ public class UnaryExp implements BasciNode {
         if (primaryExp != null) {
             primaryExp.print();
         } else if (idenfr != null) {
-            IO.dealParseOut(idenfr.toString());
-            IO.dealParseOut(lparent.toString());
+            IO.dealSyntax(idenfr.toString());
+            IO.dealSyntax(lparent.toString());
             if (funcRParams != null) {
                 funcRParams.print();
             }
-            IO.dealParseOut(rparent.toString());
+            IO.dealSyntax(rparent.toString());
         } else if (unaryOp != null) {
             unaryOp.print();
             unaryExp.print();
         }
-        IO.dealParseOut(nodeMap.get(SyntaxType.UnaryExp));
+        IO.dealSyntax(nodeMap.get(SyntaxType.UnaryExp));
     }
 }

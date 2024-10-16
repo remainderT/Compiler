@@ -29,10 +29,10 @@ public class VarDecl implements BasciNode {
         bType.print();
         varDefs.get(0).print();
         for (int i=0; i<commas.size(); i++) {
-            IO.dealParseOut(commas.get(i).toString());
+            IO.dealSyntax(commas.get(i).toString());
             varDefs.get(i+1).print();
         }
-        IO.dealParseOut(semicn.toString());
-        IO.dealParseOut(nodeMap.get(SyntaxType.VarDecl));
+        IO.dealSyntax(semicn.toString());
+        IO.dealSyntax(nodeMap.get(SyntaxType.VarDecl));
     }
 }

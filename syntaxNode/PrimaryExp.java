@@ -38,9 +38,9 @@ public class PrimaryExp implements BasciNode {
     @Override
     public void print() {
         if (lparent != null) {
-            IO.dealParseOut(lparent.toString());
+            IO.dealSyntax(lparent.toString());
             exp.print();
-            IO.dealParseOut(rparent.toString());
+            IO.dealSyntax(rparent.toString());
         } else if (lVal != null) {
             lVal.print();
         } else if (number != null) {
@@ -48,6 +48,6 @@ public class PrimaryExp implements BasciNode {
         } else if (character != null) {
             character.print();
         }
-        IO.dealParseOut(nodeMap.get(SyntaxType.PrimaryExp));
+        IO.dealSyntax(nodeMap.get(SyntaxType.PrimaryExp));
     }
 }

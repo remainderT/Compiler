@@ -134,90 +134,90 @@ public class Stmt implements BasciNode {
         switch (type) {
             case LValAssignExp:  // LVal '=' Exp ';'
                 lval.print();
-                IO.dealParseOut(assign.toString());
+                IO.dealSyntax(assign.toString());
                 exps.get(0).print();
-                IO.dealParseOut(semicn.toString());
+                IO.dealSyntax(semicn.toString());
                 break;
             case Exp:   // [Exp] ';'
                 if (!exps.isEmpty()) {
                     exps.get(0).print();
                 }
-                IO.dealParseOut(semicn.toString());
+                IO.dealSyntax(semicn.toString());
                 break;
             case Block:  // Block
                 block.print();
                 break;
             case If:   // 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
-                IO.dealParseOut(iftk.toString());
-                IO.dealParseOut(lparent.toString());
+                IO.dealSyntax(iftk.toString());
+                IO.dealSyntax(lparent.toString());
                 cond.print();
-                IO.dealParseOut(rparent.toString());
+                IO.dealSyntax(rparent.toString());
                 stmt.print();
                 if (elsetk != null) {
-                    IO.dealParseOut(elsetk.toString());
+                    IO.dealSyntax(elsetk.toString());
                     stmtElse.print();
                 }
                 break;
             case For:  // 'for' '(' [ForStmt] ';' [Cond] ';' [ForStmt] ')' Stmt
-                IO.dealParseOut(fortk.toString());
-                IO.dealParseOut(lparent.toString());
+                IO.dealSyntax(fortk.toString());
+                IO.dealSyntax(lparent.toString());
                 if (forStmt1 != null) {
                     forStmt1.print();
                 }
-                IO.dealParseOut(forSemicn1.toString());
+                IO.dealSyntax(forSemicn1.toString());
                 if (cond != null) {
                     cond.print();
                 }
-                IO.dealParseOut(forSemicn2.toString());
+                IO.dealSyntax(forSemicn2.toString());
                 if (forStmt2 != null) {
                     forStmt2.print();
                 }
-                IO.dealParseOut(rparent.toString());
+                IO.dealSyntax(rparent.toString());
                 stmt.print();
                 break;
             case Break:  // 'break' ';'
-                IO.dealParseOut(breakOrcontinuetk.toString());
-                IO.dealParseOut(semicn.toString());
+                IO.dealSyntax(breakOrcontinuetk.toString());
+                IO.dealSyntax(semicn.toString());
                 break;
             case Continue:  // 'continue' ';'
-                IO.dealParseOut(breakOrcontinuetk.toString());
-                IO.dealParseOut(semicn.toString());
+                IO.dealSyntax(breakOrcontinuetk.toString());
+                IO.dealSyntax(semicn.toString());
                 break;
             case Return:  // 'return' [Exp] ';'
-                IO.dealParseOut(returntk.toString());
+                IO.dealSyntax(returntk.toString());
                 if (!exps.isEmpty()) {
                     exps.get(0).print();
                 }
-                IO.dealParseOut(semicn.toString());
+                IO.dealSyntax(semicn.toString());
                 break;
             case LValAssignGetint:  // LVal '=' 'getint' '(' ')' ';'
                 lval.print();
-                IO.dealParseOut(assign.toString());
-                IO.dealParseOut(getintOrchartk.toString());
-                IO.dealParseOut(lparent.toString());
-                IO.dealParseOut(rparent.toString());
-                IO.dealParseOut(semicn.toString());
+                IO.dealSyntax(assign.toString());
+                IO.dealSyntax(getintOrchartk.toString());
+                IO.dealSyntax(lparent.toString());
+                IO.dealSyntax(rparent.toString());
+                IO.dealSyntax(semicn.toString());
                 break;
             case LValAssignGetchar:   // LVal '=' 'getchar' '(' ')' ';'
                 lval.print();
-                IO.dealParseOut(assign.toString());
-                IO.dealParseOut(getintOrchartk.toString());
-                IO.dealParseOut(lparent.toString());
-                IO.dealParseOut(rparent.toString());
-                IO.dealParseOut(semicn.toString());
+                IO.dealSyntax(assign.toString());
+                IO.dealSyntax(getintOrchartk.toString());
+                IO.dealSyntax(lparent.toString());
+                IO.dealSyntax(rparent.toString());
+                IO.dealSyntax(semicn.toString());
                 break;
             case Printf:  // 'printf''('StringConst {','Exp}')'';'
-                IO.dealParseOut(printtk.toString());
-                IO.dealParseOut(lparent.toString());
-                IO.dealParseOut(strcon.toString());
+                IO.dealSyntax(printtk.toString());
+                IO.dealSyntax(lparent.toString());
+                IO.dealSyntax(strcon.toString());
                 for (int i = 0; i < commas.size(); i++) {
-                    IO.dealParseOut(commas.get(i).toString());
+                    IO.dealSyntax(commas.get(i).toString());
                     exps.get(i).print();
                 }
-                IO.dealParseOut(rparent.toString());
-                IO.dealParseOut(semicn.toString());
+                IO.dealSyntax(rparent.toString());
+                IO.dealSyntax(semicn.toString());
                 break;
         }
-        IO.dealParseOut(nodeMap.get(SyntaxType.Stmt));
+        IO.dealSyntax(nodeMap.get(SyntaxType.Stmt));
     }
 }

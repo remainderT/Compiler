@@ -22,9 +22,9 @@ public class FuncRParams implements BasciNode {
     public void print() {
         exps.get(0).print();
         for (int i = 0; i < commas.size(); i++) {
-            IO.dealParseOut(commas.get(i).toString());
+            IO.dealSyntax(commas.get(i).toString());
             exps.get(i+1).print();
         }
-        IO.dealParseOut(nodeMap.get(SyntaxType.FuncRParams));
+        IO.dealSyntax(nodeMap.get(SyntaxType.FuncRParams));
     }
 }

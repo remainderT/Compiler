@@ -26,11 +26,11 @@ public class MainFuncDef implements BasciNode {
 
     @Override
     public void print() {
-        IO.dealParseOut(inttk.toString());
-        IO.dealParseOut(maintk.toString());
-        IO.dealParseOut(lparent.toString());
-        IO.dealParseOut(rparent.toString());
+        IO.dealSyntax(inttk.toString());
+        IO.dealSyntax(maintk.toString());
+        IO.dealSyntax(lparent.toString());
+        IO.dealSyntax(rparent.toString());
         block.print();
-        IO.dealParseOut(nodeMap.get(SyntaxType.MainFuncDef));
+        IO.dealSyntax(nodeMap.get(SyntaxType.MainFuncDef));
     }
 }

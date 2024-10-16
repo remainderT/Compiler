@@ -18,7 +18,7 @@ public class FuncType implements BasciNode {
 
     @Override
     public void print() {
-        IO.dealParseOut(token.toString());
-        IO.dealParseOut(nodeMap.get(SyntaxType.FuncType));
+        IO.dealSyntax(token.toString());
+        IO.dealSyntax(nodeMap.get(SyntaxType.FuncType));
     }
 }

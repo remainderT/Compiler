@@ -23,8 +23,8 @@ public class ForStmt implements BasciNode {
     @Override
     public void print() {
         lVal.print();
-        IO.dealParseOut(assign.toString());
+        IO.dealSyntax(assign.toString());
         exp.print();
-        IO.dealParseOut(nodeMap.get(SyntaxType.ForStmt));
+        IO.dealSyntax(nodeMap.get(SyntaxType.ForStmt));
     }
 }

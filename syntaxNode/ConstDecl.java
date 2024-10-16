@@ -28,15 +28,15 @@ public class ConstDecl implements BasciNode {
 
     @Override
     public void print() {
-        IO.dealParseOut(consttk.toString());
+        IO.dealSyntax(consttk.toString());
         bType.print();
         constDefs.get(0).print();
         for (int i=0; i < commas.size(); i++) {
-            IO.dealParseOut(commas.get(i).toString());
+            IO.dealSyntax(commas.get(i).toString());
             constDefs.get(i+1).print();
         }
-        IO.dealParseOut(semicn.toString());
-        IO.dealParseOut(nodeMap.get(SyntaxType.ConstDecl));
+        IO.dealSyntax(semicn.toString());
+        IO.dealSyntax(nodeMap.get(SyntaxType.ConstDecl));
 
     }
 }

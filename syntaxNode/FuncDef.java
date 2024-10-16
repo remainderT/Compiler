@@ -29,13 +29,13 @@ public class FuncDef implements BasciNode {
     @Override
     public void print() {
         funcType.print();
-        IO.dealParseOut(idenfr.toString());
-        IO.dealParseOut(lparent.toString());
+        IO.dealSyntax(idenfr.toString());
+        IO.dealSyntax(lparent.toString());
         if (funcFParams != null) {
             funcFParams.print();
         }
-        IO.dealParseOut(rparent.toString());
+        IO.dealSyntax(rparent.toString());
         block.print();
-        IO.dealParseOut(nodeMap.get(SyntaxType.FuncDef));
+        IO.dealSyntax(nodeMap.get(SyntaxType.FuncDef));
     }
 }

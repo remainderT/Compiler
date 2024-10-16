@@ -100,6 +100,10 @@ public class Parser {
         }
     }
 
+    public List<Token> getTokens() {
+        return tokens;
+    }
+
     public void analyze() {
         this.compUnit = pCompUnit();
     }

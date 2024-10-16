@@ -36,18 +36,18 @@ public class InitVal implements BasciNode {
     @Override
     public void print() {
         if (stringConst != null) {
-            IO.dealParseOut(stringConst.toString());
+            IO.dealSyntax(stringConst.toString());
         } else if (lbrace != null) {
-            IO.dealParseOut(lbrace.toString());
+            IO.dealSyntax(lbrace.toString());
             exps.get(0).print();
             for (int i=0; i<commas.size(); i++) {
-                IO.dealParseOut(commas.get(i).toString());
+                IO.dealSyntax(commas.get(i).toString());
                 exps.get(i+1).print();
             }
-            IO.dealParseOut(rbrace.toString());
+            IO.dealSyntax(rbrace.toString());
         } else {
             exps.get(0).print();
         }
-        IO.dealParseOut(nodeMap.get(SyntaxType.InitVal));
+        IO.dealSyntax(nodeMap.get(SyntaxType.InitVal));
     }
 }

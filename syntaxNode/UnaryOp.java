@@ -17,7 +17,7 @@ public class UnaryOp implements BasciNode {
 
     @Override
     public void print() {
-        IO.dealParseOut(unaryOp.toString());
-        IO.dealParseOut(nodeMap.get(SyntaxType.UnaryOp));
+        IO.dealSyntax(unaryOp.toString());
+        IO.dealSyntax(nodeMap.get(SyntaxType.UnaryOp));
     }
 }

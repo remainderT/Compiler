@@ -23,11 +23,11 @@ public class AddExp implements BasciNode {
     @Override
     public void print() {
         mulExps.get(0).print();
-        IO.dealParseOut(nodeMap.get(SyntaxType.AddExp));
+        IO.dealSyntax(nodeMap.get(SyntaxType.AddExp));
         for (int i = 0; operations != null && i < operations.size(); i++) {
-            IO.dealParseOut(operations.get(i).toString());
+            IO.dealSyntax(operations.get(i).toString());
             mulExps.get(i+1).print();
-            IO.dealParseOut(nodeMap.get(SyntaxType.AddExp));
+            IO.dealSyntax(nodeMap.get(SyntaxType.AddExp));
         }
     }
 }

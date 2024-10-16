@@ -22,11 +22,11 @@ public class LAndExp implements BasciNode {
     @Override
     public void print() {
         eqExps.get(0).print();
-        IO.dealParseOut(nodeMap.get(SyntaxType.LAndExp));
+        IO.dealSyntax(nodeMap.get(SyntaxType.LAndExp));
         for (int i=0; addTokens != null && i < addTokens.size(); i++) {
-            IO.dealParseOut(addTokens.get(i).toString());
+            IO.dealSyntax(addTokens.get(i).toString());
             eqExps.get(i+1).print();
-            IO.dealParseOut(nodeMap.get(SyntaxType.LAndExp));
+            IO.dealSyntax(nodeMap.get(SyntaxType.LAndExp));
         }
     }
 }

@@ -24,12 +24,12 @@ public class LVal implements BasciNode {
 
     @Override
     public void print() {
-        IO.dealParseOut(idenfr.toString());
+        IO.dealSyntax(idenfr.toString());
         if (lbrack != null) {
-            IO.dealParseOut(lbrack.toString());
+            IO.dealSyntax(lbrack.toString());
             exp.print();
-            IO.dealParseOut(rbrack.toString());
+            IO.dealSyntax(rbrack.toString());
         }
-        IO.dealParseOut(nodeMap.get(SyntaxType.LVal));
+        IO.dealSyntax(nodeMap.get(SyntaxType.LVal));
     }
 }

@@ -24,11 +24,11 @@ public class Block implements BasciNode {
 
     @Override
     public void print() {
-        IO.dealParseOut(lbrace.toString());
+        IO.dealSyntax(lbrace.toString());
         for (BlockItem blockItem : blockItems) {
             blockItem.print();
         }
-        IO.dealParseOut(rbrace.toString());
-        IO.dealParseOut(nodeMap.get(SyntaxType.Block));
+        IO.dealSyntax(rbrace.toString());
+        IO.dealSyntax(nodeMap.get(SyntaxType.Block));
     }
 }

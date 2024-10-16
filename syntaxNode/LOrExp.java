@@ -23,11 +23,11 @@ public class LOrExp implements BasciNode {
     @Override
     public void print() {
         lAndExps.get(0).print();
-        IO.dealParseOut(nodeMap.get(SyntaxType.LOrExp));
+        IO.dealSyntax(nodeMap.get(SyntaxType.LOrExp));
         for (int i=0; orTokens != null && i < orTokens.size(); i++) {
-            IO.dealParseOut(orTokens.get(i).toString());
+            IO.dealSyntax(orTokens.get(i).toString());
             lAndExps.get(i+1).print();
-            IO.dealParseOut(nodeMap.get(SyntaxType.LOrExp));
+            IO.dealSyntax(nodeMap.get(SyntaxType.LOrExp));
         }
     }
 }

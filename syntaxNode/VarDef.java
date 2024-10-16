@@ -28,17 +28,17 @@ public class VarDef implements BasciNode {
 
     @Override
     public void print() {
-        IO.dealParseOut(idenfr.toString());
+        IO.dealSyntax(idenfr.toString());
         if (lbrack != null) {
-            IO.dealParseOut(lbrack.toString());
+            IO.dealSyntax(lbrack.toString());
             constExp.print();
-            IO.dealParseOut(rbrack.toString());
+            IO.dealSyntax(rbrack.toString());
         }
         if (assign != null) {
-            IO.dealParseOut(assign.toString());
+            IO.dealSyntax(assign.toString());
             initVal.print();
         }
 
-        IO.dealParseOut(nodeMap.get(SyntaxType.VarDef));
+        IO.dealSyntax(nodeMap.get(SyntaxType.VarDef));
     }
 }

@@ -15,6 +15,6 @@ public class BType implements BasciNode {
 
     @Override
     public void print() {
-        IO.dealParseOut(token.toString());
+        IO.dealSyntax(token.toString());
     }
 }

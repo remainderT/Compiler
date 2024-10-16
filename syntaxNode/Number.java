@@ -18,7 +18,7 @@ public class Number implements BasciNode {
 
     @Override
     public void print() {
-        IO.dealParseOut(intcon.toString());
-        IO.dealParseOut(nodeMap.get(SyntaxType.Number));
+        IO.dealSyntax(intcon.toString());
+        IO.dealSyntax(nodeMap.get(SyntaxType.Number));
     }
 }

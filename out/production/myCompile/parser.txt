@@ -1,22 +1,3 @@
-CONSTTK const
-INTTK int
-IDENFR NO_USE1
-LBRACK [
-INTCON 11
-<Number>
-<PrimaryExp>
-<UnaryExp>
-<MulExp>
-<AddExp>
-<ConstExp>
-RBRACK ]
-ASSIGN =
-LBRACE {
-RBRACE }
-<ConstInitVal>
-<ConstDef>
-SEMICN ;
-<ConstDecl>
 INTTK int
 MAINTK main
 LPARENT (

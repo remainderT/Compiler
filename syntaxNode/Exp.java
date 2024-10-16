@@ -18,6 +18,6 @@ public class Exp implements BasciNode {
     @Override
     public void print() {
         addExp.print();
-        IO.dealParseOut(nodeMap.get(SyntaxType.Exp));
+        IO.dealSyntax(nodeMap.get(SyntaxType.Exp));
     }
 }

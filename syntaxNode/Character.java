@@ -18,7 +18,7 @@ public class Character implements BasciNode {
 
     @Override
     public void print() {
-        IO.dealParseOut(chrcon.toString());
-        IO.dealParseOut(nodeMap.get(SyntaxType.Character));
+        IO.dealSyntax(chrcon.toString());
+        IO.dealSyntax(nodeMap.get(SyntaxType.Character));
     }
 }

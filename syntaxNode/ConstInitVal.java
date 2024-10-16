@@ -36,20 +36,20 @@ public class ConstInitVal implements BasciNode {
     @Override
     public void print() {
         if (strcon != null) {
-            IO.dealParseOut(strcon.toString());
+            IO.dealSyntax(strcon.toString());
         } else if (lbrace != null) {
-            IO.dealParseOut(lbrace.toString());
+            IO.dealSyntax(lbrace.toString());
             if (!constExps.isEmpty()) {
                 constExps.get(0).print();
             }
             for (int i=0; commas != null && i<commas.size(); i++) {
-                IO.dealParseOut(commas.get(i).toString());
+                IO.dealSyntax(commas.get(i).toString());
                 constExps.get(i+1).print();
             }
-            IO.dealParseOut(rbrace.toString());
+            IO.dealSyntax(rbrace.toString());
         } else {
             constExps.get(0).print();
         }
-        IO.dealParseOut(nodeMap.get(SyntaxType.ConstInitVal));
+        IO.dealSyntax(nodeMap.get(SyntaxType.ConstInitVal));
     }
 }
