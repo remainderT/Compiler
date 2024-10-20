@@ -7,7 +7,7 @@ import util.IO;
 
 import java.util.List;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class EqExp implements BasciNode {
     //  EqExp → RelExp | EqExp ('==' | '!=') RelExp
@@ -18,6 +18,10 @@ public class EqExp implements BasciNode {
     public EqExp(List<RelExp> relExps, List<Token> tokens) {
         this.relExps = relExps;
         this.tokens = tokens;
+    }
+
+    public List<RelExp> getRelExps() {
+        return relExps;
     }
 
     @Override

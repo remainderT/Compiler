@@ -44,7 +44,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class Parser {
+public class Syntax {
     private List<Token> tokens;
     private List<Error> errors;
     private Token now;
@@ -53,7 +53,7 @@ public class Parser {
     private CompUnit compUnit;
     int index = 0;
 
-    public Parser(List<Token> tokens, List<Error> errors) {
+    public Syntax(List<Token> tokens, List<Error> errors) {
         this.tokens = tokens;
         this.errors = errors;
         now = tokens.get(0);
@@ -108,6 +108,10 @@ public class Parser {
         this.compUnit = pCompUnit();
     }
 
+    public CompUnit getCompUnit() {
+        return compUnit;
+    }
+
     private CompUnit pCompUnit() {
         // CompUnit -> {Decl} {FuncDef} MainFuncDef
         List<Decl> decls = new ArrayList<>();
@@ -145,7 +149,7 @@ public class Parser {
     private FuncDef pFuncDef() {
         // FuncDef → FuncType Ident '(' [FuncFParams] ')' Block
         FuncType funcType;
-        Token idenfr = null;
+        Token ident = null;
         Token lparent = null;
         FuncFParams funcFParams = null;
         Token rparent = null;
@@ -153,7 +157,7 @@ public class Parser {
 
         funcType = pFuncType();
         if (now.getType() == TokenType.IDENFR) {
-            idenfr = now;
+            ident = now;
             next();
         }
         if (now.getType() == TokenType.LPARENT) {
@@ -170,7 +174,7 @@ public class Parser {
             errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.j));
         }
         block = pBlock();
-        return new FuncDef(funcType, idenfr, lparent, funcFParams, rparent, block);
+        return new FuncDef(funcType, ident, lparent, funcFParams, rparent, block);
 
     }
 
@@ -191,13 +195,13 @@ public class Parser {
     private FuncFParam pFuncFParam() {
         // FuncFParam → BType Ident ['[' ']']
         BType bType = null;
-        Token idenfr = null;
+        Token ident = null;
         Token lbrack = null;
         Token rbrack = null;
 
         bType = pBType();
         if (now.getType() == TokenType.IDENFR) {
-            idenfr = now;
+            ident = now;
             next();
         }
         if (now.getType() == TokenType.LBRACK) {
@@ -210,7 +214,7 @@ public class Parser {
                 errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.k));
             }
         }
-        return new FuncFParam(bType, idenfr, lbrack, rbrack);
+        return new FuncFParam(bType, ident, lbrack, rbrack);
     }
 
     private FuncType pFuncType() {
@@ -316,7 +320,7 @@ public class Parser {
 
     private ConstDef pConstDef() {
         //  ConstDef → Ident [ '[' ConstExp ']' ] '=' ConstInitVal
-        Token idenfr = null;
+        Token ident = null;
         Token lbrack = null;
         ConstExp constExp = null;
         Token rbrack = null;
@@ -324,7 +328,7 @@ public class Parser {
         ConstInitVal constInitVal = null;
 
         if (now.getType() == TokenType.IDENFR) {
-            idenfr = now;
+            ident = now;
             next();
         }
         if (now.getType() == TokenType.LBRACK) {
@@ -343,12 +347,12 @@ public class Parser {
             next();
         }
         constInitVal = pConstInitVal();
-        return new ConstDef(idenfr, lbrack, constExp, rbrack, assign, constInitVal);
+        return new ConstDef(ident, lbrack, constExp, rbrack, assign, constInitVal);
     }
 
     private VarDef pVarDef() {
         //  Ident [ '[' ConstExp ']' ] | Ident [ '[' ConstExp ']' ] '=' InitVal
-        Token idenfr = null;
+        Token ident = null;
         Token lbrack = null;
         ConstExp constExp = null;
         Token rbrack = null;
@@ -356,7 +360,7 @@ public class Parser {
         InitVal initVal = null;
 
         if (now.getType() == TokenType.IDENFR) {
-            idenfr = now;
+            ident = now;
             next();
         }
         if (now.getType() == TokenType.LBRACK) {
@@ -375,7 +379,7 @@ public class Parser {
             next();
             initVal = pInitVal();
         }
-        return new VarDef(idenfr, lbrack, constExp, rbrack, assign, initVal);
+        return new VarDef(ident, lbrack, constExp, rbrack, assign, initVal);
     }
 
     private ConstExp pConstExp() {
@@ -421,7 +425,7 @@ public class Parser {
     private UnaryExp pUnaryExp() {
         //  UnaryExp → PrimaryExp | Ident '(' [FuncRParams] ')' | UnaryOp UnaryExp
         PrimaryExp primaryExp = null;
-        Token idenfr = null;
+        Token ident = null;
         Token lparent = null;
         FuncRParams funcRParams = null;
         Token rparent = null;
@@ -429,7 +433,7 @@ public class Parser {
         UnaryExp unaryExp = null;
 
         if (now.getType() == TokenType.IDENFR && preRead.getType() == TokenType.LPARENT) {
-            idenfr = now;
+            ident = now;
             next();
             if (now.getType() == TokenType.LPARENT) {
                 lparent = now;
@@ -444,7 +448,7 @@ public class Parser {
             } else {
                 errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.j));
             }
-            return new UnaryExp(idenfr, lparent, funcRParams, rparent);
+            return new UnaryExp(ident, lparent, funcRParams, rparent);
         } else if (now.getType() == TokenType.PLUS || now.getType() == TokenType.MINU || now.getType() == TokenType.NOT) {
             unaryOp = pUnaryOp();
             unaryExp = pUnaryExp();
@@ -926,13 +930,13 @@ public class Parser {
 
     private LVal pLVal() {
         // LVal → Ident ['[' Exp ']']
-        Token idenfr = null;
+        Token ident = null;
         Token lbrack = null;
         Exp exp = null;
         Token rbrack = null;
 
         if (now.getType() == TokenType.IDENFR) {
-            idenfr = now;
+            ident = now;
             next();
         }
         if (now.getType() == TokenType.LBRACK) {
@@ -946,7 +950,7 @@ public class Parser {
                 errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.k));
             }
         }
-        return new LVal(idenfr, lbrack, exp, rbrack);
+        return new LVal(ident, lbrack, exp, rbrack);
     }
 
     private PrimaryExp pPrimaryExp() {

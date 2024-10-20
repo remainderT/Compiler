@@ -7,7 +7,7 @@ import util.IO;
 
 import java.util.List;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class MulExp implements BasciNode {
     //  MulExp → UnaryExp | MulExp ('*' | '/' | '%') UnaryExp
@@ -17,6 +17,10 @@ public class MulExp implements BasciNode {
     public MulExp(List<UnaryExp> unaryExps, List<Token> operators) {
         this.unaryExps = unaryExps;
         this.operators = operators;
+    }
+
+    public List<UnaryExp> getUnaryExps() {
+        return unaryExps;
     }
 
     @Override

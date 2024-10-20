@@ -13,6 +13,14 @@ public class BlockItem implements BasciNode {
         this.stmt = stmt;
     }
 
+    public Decl getDecl() {
+        return decl;
+    }
+
+    public Stmt getStmt() {
+        return stmt;
+    }
+
     @Override
     public void print() {
         if (decl != null) {

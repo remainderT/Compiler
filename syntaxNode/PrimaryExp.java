@@ -5,7 +5,7 @@ import common.SyntaxType;
 import frontend.Token;
 import util.IO;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class PrimaryExp implements BasciNode {
     //  PrimaryExp → '(' Exp ')' | LVal | Number | Character
@@ -33,6 +33,15 @@ public class PrimaryExp implements BasciNode {
 
     public PrimaryExp(Character character) {
         this.character = character;
+    }
+
+
+    public Exp getExp() {
+        return exp;
+    }
+
+    public LVal getLVal() {
+        return lVal;
     }
 
     @Override

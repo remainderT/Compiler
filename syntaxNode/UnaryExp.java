@@ -5,13 +5,13 @@ import common.SyntaxType;
 import frontend.Token;
 import util.IO;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class UnaryExp implements BasciNode {
     // UnaryExp → PrimaryExp | Ident '(' [FuncRParams] ')' | UnaryOp UnaryExp
 
     private PrimaryExp primaryExp = null;
-    private Token idenfr = null;
+    private Token ident = null;
     private Token lparent = null;
     private FuncRParams funcRParams = null;
     private Token rparent = null;
@@ -23,9 +23,9 @@ public class UnaryExp implements BasciNode {
         this.primaryExp = primaryExp;
     }
 
-    public UnaryExp(Token idenfr, Token lparent, FuncRParams funcRParams, Token rparent) {
+    public UnaryExp(Token ident, Token lparent, FuncRParams funcRParams, Token rparent) {
         this.funcRParams = funcRParams;
-        this.idenfr = idenfr;
+        this.ident = ident;
         this.lparent = lparent;
         this.rparent = rparent;
     }
@@ -35,12 +35,28 @@ public class UnaryExp implements BasciNode {
         this.unaryExp = unaryExp;
     }
 
+    public Token getIdent() {
+        return ident;
+    }
+
+    public FuncRParams getFuncRParams() {
+        return funcRParams;
+    }
+
+    public PrimaryExp getPrimaryExp() {
+        return primaryExp;
+    }
+
+    public UnaryExp getUnaryExp() {
+        return unaryExp;
+    }
+
     @Override
     public void print() {
         if (primaryExp != null) {
             primaryExp.print();
-        } else if (idenfr != null) {
-            IO.dealSyntax(idenfr.toString());
+        } else if (ident != null) {
+            IO.dealSyntax(ident.toString());
             IO.dealSyntax(lparent.toString());
             if (funcRParams != null) {
                 funcRParams.print();

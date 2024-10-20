@@ -16,6 +16,14 @@ public class Decl implements BasciNode {
         this.varDecl = varDecl;
     }
 
+    public ConstDecl getConstDecl() {
+        return constDecl;
+    }
+
+    public VarDecl getVarDecl() {
+        return varDecl;
+    }
+
     @Override
     public void print() {
         if (constDecl != null) {

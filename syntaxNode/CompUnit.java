@@ -6,7 +6,7 @@ import util.IO;
 
 import java.util.List;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class CompUnit implements BasciNode {
     // CompUnit → {Decl} {FuncDef} MainFuncDef
@@ -19,6 +19,18 @@ public class CompUnit implements BasciNode {
         this.decls = decls;
         this.funcDefs = funcDefs;
         this.mainFuncDef = mainFuncDef;
+    }
+
+    public List<Decl> getDecls() {
+        return decls;
+    }
+
+    public List<FuncDef> getFuncDefs() {
+        return funcDefs;
+    }
+
+    public MainFuncDef getMainFuncDef() {
+        return mainFuncDef;
     }
 
     @Override

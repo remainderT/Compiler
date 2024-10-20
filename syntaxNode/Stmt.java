@@ -8,7 +8,7 @@ import util.IO;
 
 import java.util.List;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class Stmt implements BasciNode {
 /*    Stmt → LVal '=' Exp ';' // 每种类型的语句都要覆盖
@@ -127,6 +127,42 @@ public class Stmt implements BasciNode {
         this.forSemicn2 = forSemicn2;
         this.rparent = rparent;
         this.stmt = stmt;
+    }
+
+    public StmtTpye getType() {
+        return type;
+    }
+
+    public LVal getLVal() {
+        return lval;
+    }
+
+    public Block getBlock() {
+        return block;
+    }
+
+    public Stmt getStmt() {
+        return stmt;
+    }
+
+    public Stmt getStmtElse() {
+        return stmtElse;
+    }
+
+    public ForStmt getForStmt1() {
+        return forStmt1;
+    }
+
+    public ForStmt getForStmt2() {
+        return forStmt2;
+    }
+
+    public Cond getCond() {
+        return cond;
+    }
+
+    public List<Exp> getExps() {
+        return exps;
     }
 
     @Override

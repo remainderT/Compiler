@@ -5,7 +5,7 @@ import common.SyntaxType;
 import frontend.Token;
 import util.IO;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class FuncType implements BasciNode {
     // FuncType → 'void' | 'int' | 'char'
@@ -16,9 +16,15 @@ public class FuncType implements BasciNode {
         this.token = token;
     }
 
+    public Token getToken() {
+        return token;
+    }
+
     @Override
     public void print() {
         IO.dealSyntax(token.toString());
         IO.dealSyntax(nodeMap.get(SyntaxType.FuncType));
     }
+
+
 }

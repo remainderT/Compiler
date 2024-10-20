@@ -7,7 +7,7 @@ import util.IO;
 
 import java.util.List;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class FuncFParams implements BasciNode {
     //  FuncFParams → FuncFParam { ',' FuncFParam }
@@ -17,6 +17,10 @@ public class FuncFParams implements BasciNode {
     public FuncFParams(List<FuncFParam> funcFParams, List<Token> commas) {
         this.funcFParams = funcFParams;
         this.commas = commas;
+    }
+
+    public List<FuncFParam> getFuncFParams() {
+        return funcFParams;
     }
 
     @Override

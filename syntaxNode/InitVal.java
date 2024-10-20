@@ -7,7 +7,7 @@ import util.IO;
 
 import java.util.List;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class InitVal implements BasciNode {
     // Exp | '{' [ Exp { ',' Exp } ] '}' | StringConst
@@ -31,6 +31,10 @@ public class InitVal implements BasciNode {
         this.commas = commas;
         this.lbrace = lbrace;
         this.rbrace = rbrace;
+    }
+
+    public List<Exp> getExps() {
+        return exps;
     }
 
     @Override

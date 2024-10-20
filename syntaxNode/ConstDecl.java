@@ -7,7 +7,7 @@ import util.IO;
 
 import java.util.List;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class ConstDecl implements BasciNode {
     // 'const' BType ConstDef { ',' ConstDef } ';'
@@ -24,6 +24,14 @@ public class ConstDecl implements BasciNode {
         this.constDefs = constDefs;
         this.commas = commas;
         this.semicn = semicn;
+    }
+
+    public List<ConstDef> getConstDefs() {
+        return constDefs;
+    }
+
+    public BType getBType() {
+        return bType;
     }
 
     @Override

@@ -1,5 +1,6 @@
 import frontend.Lexer;
-import frontend.Parser;
+import frontend.Semantic;
+import frontend.Syntax;
 import frontend.Token;
 import common.Error;
 import util.IO;
@@ -14,10 +15,12 @@ public class Compiler {
         List<Error> errors = new ArrayList<>();
         Lexer lexer = new Lexer(content, errors);
         List<Token> tokens = lexer.analyze();
-        Parser parser = new Parser(tokens, errors);
-        parser.analyze();
+        Syntax syntax = new Syntax(tokens, errors);
+        syntax.analyze();
+        Semantic semantic = new Semantic(errors);
+        semantic.fCompUnit(syntax.getCompUnit());
         if (errors.size() == 0) {
-            IO.dealStdout(parser);
+            IO.dealStdout(semantic, syntax);
         } else{
             IO.dealStderr(errors);
         }

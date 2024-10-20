@@ -4,7 +4,7 @@ import common.BasciNode;
 import common.SyntaxType;
 import util.IO;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class Exp implements BasciNode {
     //  Exp → AddExp
@@ -13,6 +13,10 @@ public class Exp implements BasciNode {
 
     public Exp(AddExp addExp) {
         this.addExp = addExp;
+    }
+
+    public AddExp getAddExp() {
+        return addExp;
     }
 
     @Override

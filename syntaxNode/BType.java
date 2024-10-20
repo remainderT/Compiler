@@ -13,6 +13,10 @@ public class BType implements BasciNode {
         this.token = token;
     }
 
+    public Token getToken() {
+        return token;
+    }
+
     @Override
     public void print() {
         IO.dealSyntax(token.toString());

@@ -7,7 +7,7 @@ import util.IO;
 
 import java.util.List;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class Block implements BasciNode {
     // Block → '{' { BlockItem } '}'
@@ -20,6 +20,10 @@ public class Block implements BasciNode {
         this.lbrace = lbrace;
         this.blockItems = blockItems;
         this.rbrace = rbrace;
+    }
+
+    public List<BlockItem> getBlockItems() {
+        return blockItems;
     }
 
     @Override

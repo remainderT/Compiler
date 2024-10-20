@@ -7,7 +7,7 @@ import util.IO;
 
 import java.util.List;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class FuncRParams implements BasciNode {
     private List<Exp> exps;
@@ -16,6 +16,10 @@ public class FuncRParams implements BasciNode {
     public FuncRParams(List<Exp> exps, List<Token> commas) {
         this.exps = exps;
         this.commas = commas;
+    }
+
+    public List<Exp> getExps() {
+        return exps;
     }
 
     @Override

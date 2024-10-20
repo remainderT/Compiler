@@ -5,7 +5,7 @@ import common.SyntaxType;
 import frontend.Token;
 import util.IO;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class MainFuncDef implements BasciNode {
     //  MainFuncDef → 'int' 'main' '(' ')' Block
@@ -22,6 +22,10 @@ public class MainFuncDef implements BasciNode {
         this.lparent = lparent;
         this.rparent = rparent;
         this.block = block;
+    }
+
+    public Block getBlock() {
+        return block;
     }
 
     @Override

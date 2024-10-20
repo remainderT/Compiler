@@ -5,20 +5,20 @@ import common.SyntaxType;
 import frontend.Token;
 import util.IO;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class ConstDef implements BasciNode {
     // Ident [ '[' ConstExp ']' ] '=' ConstInitVal
 
-    private Token idenfr;
+    private Token ident;
     private Token lbrack;
     private ConstExp constExp;
     private Token rbrack;
     private Token assign;
     private ConstInitVal constInitVal;
 
-    public ConstDef(Token idenfr, Token lbrack, ConstExp constExp, Token rbrack, Token assign, ConstInitVal constInitVal) {
-        this.idenfr = idenfr;
+    public ConstDef(Token ident, Token lbrack, ConstExp constExp, Token rbrack, Token assign, ConstInitVal constInitVal) {
+        this.ident = ident;
         this.lbrack = lbrack;
         this.constExp = constExp;
         this.rbrack = rbrack;
@@ -26,9 +26,21 @@ public class ConstDef implements BasciNode {
         this.constInitVal = constInitVal;
     }
 
+    public Token getIdent() {
+        return ident;
+    }
+
+    public int getDimension() {
+        return lbrack == null ? 0 : 1;
+    }
+
+    public ConstInitVal getConstInitVal() {
+        return constInitVal;
+    }
+
     @Override
     public void print() {
-        IO.dealSyntax(idenfr.toString());
+        IO.dealSyntax(ident.toString());
         if (lbrack != null) {
             IO.dealSyntax(lbrack.toString());
             constExp.print();

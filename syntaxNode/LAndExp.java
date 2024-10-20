@@ -7,7 +7,7 @@ import util.IO;
 
 import java.util.List;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class LAndExp implements BasciNode {
     //  LAndExp → EqExp | LAndExp '&&' EqExp
@@ -17,6 +17,10 @@ public class LAndExp implements BasciNode {
     public LAndExp(List<EqExp> eqExps, List<Token> addTokens) {
         this.eqExps = eqExps;
         this.addTokens = addTokens;
+    }
+
+    public List<EqExp> getEqExps() {
+        return eqExps;
     }
 
     @Override

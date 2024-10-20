@@ -7,7 +7,7 @@ import util.IO;
 
 import java.util.List;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class AddExp implements BasciNode {
     //  AddExp → MulExp | AddExp ('+' | '−') MulExp
@@ -18,6 +18,10 @@ public class AddExp implements BasciNode {
     public AddExp(List<MulExp> mulExpNodes, List<Token> operations) {
         this.mulExps = mulExpNodes;
         this.operations = operations;
+    }
+
+    public List<MulExp> getMulExps() {
+        return mulExps;
     }
 
     @Override

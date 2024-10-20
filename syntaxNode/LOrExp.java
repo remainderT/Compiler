@@ -7,7 +7,7 @@ import util.IO;
 
 import java.util.List;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class LOrExp implements BasciNode {
     //  LOrExp → LAndExp | LOrExp '||' LAndExp
@@ -18,6 +18,10 @@ public class LOrExp implements BasciNode {
     public LOrExp(List<LAndExp> lAndExps, List<Token> orTokens) {
         this.lAndExps = lAndExps;
         this.orTokens = orTokens;
+    }
+
+    public List<LAndExp> getLAndExps() {
+        return lAndExps;
     }
 
     @Override

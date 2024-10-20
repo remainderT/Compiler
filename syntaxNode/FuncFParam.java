@@ -5,26 +5,38 @@ import common.SyntaxType;
 import frontend.Token;
 import util.IO;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class FuncFParam implements BasciNode {
     // FuncFParam → BType Ident ['[' ']']
     private BType bType;
-    private Token inenfr;
+    private Token ident;
     private Token lbrack;
     private Token rbrack;
 
-    public FuncFParam(BType bType, Token inenfr, Token lbrack, Token rbrack) {
+    public FuncFParam(BType bType, Token ident, Token lbrack, Token rbrack) {
         this.bType = bType;
-        this.inenfr = inenfr;
+        this.ident = ident;
         this.lbrack = lbrack;
         this.rbrack = rbrack;
+    }
+
+    public Token getIdent() {
+        return ident;
+    }
+
+    public BType getBType() {
+        return bType;
+    }
+
+    public int getDimension() {
+        return lbrack == null ? 0 : 1;
     }
 
     @Override
     public void print() {
         bType.print();
-        IO.dealSyntax(inenfr.toString());
+        IO.dealSyntax(ident.toString());
         if (lbrack != null) {
             IO.dealSyntax(lbrack.toString());
             IO.dealSyntax(rbrack.toString());

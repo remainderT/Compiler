@@ -3,8 +3,11 @@ package util;
 /*输入输出解析*/
 
 import common.Error;
-import frontend.Parser;
+import frontend.Semantic;
+import frontend.Syntax;
 import frontend.Token;
+import symbol.Symbol;
+import symbol.SymbolTable;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -22,7 +25,7 @@ public class IO {
     private static String STDIN_PATH;
     private static String STDOUT_PATH;
     private static String STDERR_PATH;
-    private static int stage = 2;
+    private static int stage = 3;
 
     private static HashMap<Integer, String> map = new HashMap<>();
 
@@ -64,7 +67,7 @@ public class IO {
         return content.toString();
     }
 
-    public static void dealStdout(Parser parser) {
+    public static void dealStdout(Semantic semantic, Syntax parser) {
         switch (stage) {
             case 1:
                 dealLexical(parser.getTokens());
@@ -73,6 +76,7 @@ public class IO {
                 parser.print();
                 break;
             case 3:
+                dealSemantic(semantic);
                 break;
             case 4:
                 break;
@@ -81,10 +85,9 @@ public class IO {
     }
 
     public static void dealLexical(List<Token> tokens) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(STDIN_PATH))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(STDOUT_PATH))) {
             for (Token token : tokens) {
                 writer.write(token.toString());
-                writer.newLine(); // 添加换行
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -99,6 +102,19 @@ public class IO {
             e.printStackTrace();
         }
     }
+
+    public static void dealSemantic(Semantic semantic) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(STDOUT_PATH))) {
+            for (SymbolTable symbolTable : semantic.getSymbolTables()) {
+                for (Symbol symbol : symbolTable.getSymbolList()) {
+                    writer.write(symbolTable.getIndex() + " " + symbol.toString() + "\n");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public static void dealStderr(List<Error> errors) {
         Collections.sort(errors, new Comparator<Error>() {

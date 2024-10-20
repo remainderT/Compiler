@@ -7,7 +7,7 @@ import util.IO;
 
 import java.util.List;
 
-import static frontend.Parser.nodeMap;
+import static frontend.Syntax.nodeMap;
 
 public class VarDecl implements BasciNode {
     //  VarDecl → BType VarDef { ',' VarDef } ';'
@@ -22,6 +22,14 @@ public class VarDecl implements BasciNode {
         this.varDefs = varDefs;
         this.commas = commas;
         this.semicn = semicn;
+    }
+
+    public List<VarDef> getVarDefs() {
+        return varDefs;
+    }
+
+    public BType getBType() {
+        return bType;
     }
 
     @Override
