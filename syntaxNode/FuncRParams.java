@@ -24,11 +24,13 @@ public class FuncRParams implements BasciNode {
 
     @Override
     public void print() {
-        exps.get(0).print();
-        for (int i = 0; i < commas.size(); i++) {
-            IO.dealSyntax(commas.get(i).toString());
-            exps.get(i+1).print();
+        if (exps != null && !exps.isEmpty()) {
+            exps.get(0).print();
+            for (int i = 0; i < commas.size(); i++) {
+                IO.dealSyntax(commas.get(i).toString());
+                exps.get(i+1).print();
+            }
+            IO.dealSyntax(nodeMap.get(SyntaxType.FuncRParams));
         }
-        IO.dealSyntax(nodeMap.get(SyntaxType.FuncRParams));
     }
 }

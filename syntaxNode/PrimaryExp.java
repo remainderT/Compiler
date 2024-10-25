@@ -35,13 +35,20 @@ public class PrimaryExp implements BasciNode {
         this.character = character;
     }
 
-
     public Exp getExp() {
         return exp;
     }
 
     public LVal getLVal() {
         return lVal;
+    }
+
+    public Number getNumber() {
+        return number;
+    }
+
+    public Character getCharacter() {
+        return character;
     }
 
     @Override

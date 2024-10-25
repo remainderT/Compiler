@@ -3,8 +3,12 @@ package util;
 import common.SemanticType;
 import symbol.Symbol;
 import syntaxNode.BType;
+import syntaxNode.FuncFParam;
 import syntaxNode.FuncFParams;
 import syntaxNode.FuncType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 // 1代表数组，0代表变量
 public class  SymbolFactory {
@@ -42,13 +46,32 @@ public class  SymbolFactory {
     }
 
 
-    public static Symbol buildFunc(FuncType funcType, String name) {
+    public static Symbol buildFunc(FuncType funcType, String name, FuncFParams funcFParams) {
+        List<SemanticType> paramTypes = new ArrayList<>();
+        if (funcFParams != null) {
+            for (int i = 0; i < funcFParams.getFuncFParams().size(); i++) {
+                FuncFParam param = funcFParams.getFuncFParams().get(i);
+                if (param.getBType().getToken().getContent().equals("int")) {
+                    if (param.getDimension() == 1) {
+                        paramTypes.add(SemanticType.IntArray);
+                    } else {
+                        paramTypes.add(SemanticType.Int);
+                    }
+                } else {
+                    if (param.getDimension() == 1) {
+                        paramTypes.add(SemanticType.CharArray);
+                    } else {
+                        paramTypes.add(SemanticType.Char);
+                    }
+                }
+            }
+        }
         if (funcType.getToken().getContent().equals("int")) {
-            return new Symbol(SemanticType.IntFunc, name,0 );
+            return new Symbol(SemanticType.IntFunc, name, 0, paramTypes);
         } else if (funcType.getToken().getContent().equals("char")) {
-            return new Symbol(SemanticType.CharFunc, name,1);
+            return new Symbol(SemanticType.CharFunc, name,1, paramTypes);
         } else {   // void
-            return new Symbol(SemanticType.VoidFunc, name,2);
+            return new Symbol(SemanticType.VoidFunc, name,2, paramTypes);
         }
     }
 

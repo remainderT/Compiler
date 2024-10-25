@@ -28,6 +28,10 @@ public class MainFuncDef implements BasciNode {
         return block;
     }
 
+    public Token getInttk() {
+        return inttk;
+    }
+
     @Override
     public void print() {
         IO.dealSyntax(inttk.toString());

@@ -2,6 +2,9 @@ package frontend;
 
 import common.Error;
 import common.ErrorType;
+import common.ParamType;
+import common.SemanticType;
+import symbol.FuncSymbolTable;
 import symbol.Symbol;
 import symbol.SymbolTable;
 import syntaxNode.AddExp;
@@ -39,6 +42,8 @@ import util.SymbolFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Semantic {
 
@@ -48,22 +53,43 @@ public class Semantic {
 
     private List<Error> errors;
 
-    int index;  // 符号表编号
+    private int index;  // 符号表编号
 
+    private int loopCount;
 
-    public Semantic(List<Error> errors) {
+    private static final HashMap<SemanticType, ParamType> typeChangeMap = new HashMap<>();
+
+    private CompUnit compUnit;
+
+    static {
+        typeChangeMap.put(SemanticType.Int, ParamType.Var);
+        typeChangeMap.put(SemanticType.Char, ParamType.Var);
+        typeChangeMap.put(SemanticType.ConstInt, ParamType.Var);
+        typeChangeMap.put(SemanticType.ConstChar, ParamType.Var);
+        typeChangeMap.put(SemanticType.CharArray, ParamType.CharArray);
+        typeChangeMap.put(SemanticType.IntArray, ParamType.IntArray);
+        typeChangeMap.put(SemanticType.ConstCharArray, ParamType.CharArray);
+        typeChangeMap.put(SemanticType.ConstIntArray, ParamType.IntArray);
+        typeChangeMap.put(SemanticType.CharFunc, ParamType.Var);
+        typeChangeMap.put(SemanticType.IntFunc, ParamType.Var);
+        typeChangeMap.put(SemanticType.VoidFunc, ParamType.Error);
+    }
+
+    public Semantic(CompUnit compUnit, List<Error> errors) {
         index = 1;
+        loopCount = 0;
         symbolTables = new ArrayList<>();
         this.currentSymbolTable = new SymbolTable(1, null);
         symbolTables.add(currentSymbolTable);
         this.errors = errors;
+        this.compUnit = compUnit;
     }
 
     public List<SymbolTable> getSymbolTables() {
         return symbolTables;
     }
 
-    public void fCompUnit(CompUnit compUnit) {
+    public void fCompUnit() {
         // CompUnit -> {Decl} {FuncDef} MainFuncDef
         for (Decl decl : compUnit.getDecls()) {
             fDecl(decl);
@@ -86,12 +112,13 @@ public class Semantic {
     public void fFuncDef(FuncDef funcDef) {
         //  FuncDef → FuncType Ident '(' [FuncFParams] ')' Block
         Token ident = funcDef.getIdent();
-        if (currentSymbolTable.contains(ident.getContent())) {
+        if (currentSymbolTable.currentContains(ident.getContent())) {
             errors.add(new Error(ident.getLineNumber(), ErrorType.b));
+        } else {
+            currentSymbolTable.put(ident.getContent(), SymbolFactory.buildFunc(funcDef.getFuncType(), ident.getContent(), funcDef.getFuncFParams()));
         }
-        currentSymbolTable.put(ident.getContent(), SymbolFactory.buildFunc(funcDef.getFuncType(), ident.getContent()));
         SymbolTable parent = currentSymbolTable;
-        currentSymbolTable = new SymbolTable(++index, parent);
+        currentSymbolTable = new FuncSymbolTable(++index, parent, funcDef.getFuncType().getToken());
         symbolTables.add(currentSymbolTable);
         if (funcDef.getFuncFParams() != null) {
             fFuncFParams(funcDef.getFuncFParams());
@@ -103,7 +130,7 @@ public class Semantic {
     public void fMainFunDef(MainFuncDef mainFuncDef) {
         // MainFuncDef -> 'void' 'main' '(' ')' Block
         SymbolTable parent = currentSymbolTable;
-        currentSymbolTable = new SymbolTable(++index, parent);
+        currentSymbolTable = new FuncSymbolTable(++index, parent, mainFuncDef.getInttk());
         symbolTables.add(currentSymbolTable);
         fBlock(mainFuncDef.getBlock());
         currentSymbolTable = parent;
@@ -126,7 +153,7 @@ public class Semantic {
     public void fConstDef(ConstDef constDef, BType bType) {
         // ConstDef → Ident [ '[' ConstExp ']' ] '=' ConstInitVal
         Token ident = constDef.getIdent();
-        if (currentSymbolTable.contains(ident.getContent())) {
+        if (currentSymbolTable.currentContains(ident.getContent())) {
             errors.add(new Error(ident.getLineNumber(), ErrorType.b));
         }
         int dimension = constDef.getDimension();
@@ -143,7 +170,7 @@ public class Semantic {
     public void fVarDef(VarDef varDef, BType bType) {
         // VarDef → Ident [ '[' ConstExp ']' ] | Ident [ '[' ConstExp ']' ] '=' InitVal
         Token ident = varDef.getIdent();
-        if (currentSymbolTable.contains(ident.getContent())) {
+        if (currentSymbolTable.currentContains(ident.getContent())) {
             errors.add(new Error(ident.getLineNumber(), ErrorType.b));
         }
         int dimension = varDef.getDimension();
@@ -204,14 +231,96 @@ public class Semantic {
         if (unaryExp.getPrimaryExp() != null) {
             fPrimaryExp(unaryExp.getPrimaryExp());
         } else if (unaryExp.getIdent() != null) {
-            if (!currentSymbolTable.get(unaryExp.getIdent().getContent())) {
+            if (!currentSymbolTable.parentContains(unaryExp.getIdent().getContent())) {
                 errors.add(new Error(unaryExp.getIdent().getLineNumber(), ErrorType.c));
+                return;
+            }
+            Symbol funcSymbol = currentSymbolTable.get(unaryExp.getIdent().getContent());
+            if (unaryExp.getFuncRParams() == null && !funcSymbol.getParamTypes().isEmpty()) {
+                errors.add(new Error(unaryExp.getIdent().getLineNumber(), ErrorType.d));
+                return;
             }
             if (unaryExp.getFuncRParams() != null) {
+                if (funcSymbol.getParamTypes().size() != unaryExp.getFuncRParams().getExps().size()) {
+                    errors.add(new Error(unaryExp.getIdent().getLineNumber(), ErrorType.d));
+                    return;
+                }
+                for (int i=0; i<funcSymbol.getParamTypes().size(); i++) {
+                    SemanticType fpType = funcSymbol.getParamTypes().get(i);
+                    Exp exp = unaryExp.getFuncRParams().getExps().get(i);
+                    if (!checkParamTypeInExp(exp, typeChangeMap.get(fpType))) {
+                        errors.add(new Error(unaryExp.getIdent().getLineNumber(), ErrorType.e));
+                        return;
+                    }
+                }
                 fFuncRParams(unaryExp.getFuncRParams());
             }
         } else {
             fUnaryExp(unaryExp.getUnaryExp());
+        }
+    }
+
+    public Boolean checkParamTypeInExp(Exp exp, ParamType fpType) {
+        return checkParamTypeInAddExp(exp.getAddExp(), fpType);
+    }
+
+    public Boolean checkParamTypeInAddExp(AddExp addExp, ParamType fpType) {
+        for (MulExp mulExp : addExp.getMulExps()) {
+            if (!checkParamTypeInMulExp(mulExp, fpType)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public Boolean checkParamTypeInMulExp(MulExp mulExp, ParamType fpType) {
+        for (UnaryExp unaryExp : mulExp.getUnaryExps()) {
+            if (!checkParamTypeInUnaryExp(unaryExp, fpType)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public Boolean checkParamTypeInUnaryExp(UnaryExp unaryExp, ParamType fpType) {
+        if (unaryExp.getPrimaryExp() != null) {
+            return checkParamTypeInPrimaryExp(unaryExp.getPrimaryExp(), fpType);
+        } else if (unaryExp.getIdent() != null) {
+            Symbol rpSymbol = currentSymbolTable.get(unaryExp.getIdent().getContent());
+            return typeChangeMap.get(rpSymbol.getType()) == fpType;
+        } else {
+            return checkParamTypeInUnaryExp(unaryExp.getUnaryExp(), fpType);
+        }
+    }
+
+    public Boolean checkParamTypeInPrimaryExp(PrimaryExp primaryExp, ParamType fpType) {
+        if (primaryExp.getExp() != null) {
+            return checkParamTypeInExp(primaryExp.getExp(), fpType);
+        } else if (primaryExp.getLVal() != null) {
+            return checkParamTypeInLVal(primaryExp.getLVal(), fpType);
+        } else {
+            return fpType == ParamType.Var;
+        }
+    }
+
+    public Boolean checkParamTypeInLVal(LVal lVal, ParamType fpType) {
+        Symbol symbol = currentSymbolTable.get(lVal.getIdent().getContent());
+        if (typeChangeMap.get(symbol.getType()) == ParamType.Var) {
+            return fpType == ParamType.Var;
+        } else if (typeChangeMap.get(symbol.getType()) == ParamType.IntArray) {
+            if (lVal.getLbrack() != null) {
+                return fpType == ParamType.Var;
+            } else {
+                return fpType == ParamType.IntArray;
+            }
+        } else if (typeChangeMap.get(symbol.getType()) == ParamType.CharArray) {
+            if (lVal.getLbrack() != null) {
+                return fpType == ParamType.Var;
+            } else {
+                return fpType == ParamType.CharArray;
+            }
+        } else {
+            return false;
         }
     }
 
@@ -227,7 +336,9 @@ public class Semantic {
     public void fLVal(LVal lVal) {
         // LVal → Ident | Ident '[' Exp ']'
         Token ident = lVal.getIdent();
-        if (!currentSymbolTable.get(ident.getContent())) {
+        if (!currentSymbolTable.parentContains(ident.getContent())) {
+            System.out.println(ident.getContent());
+            currentSymbolTable.parentContains(ident.getContent());
             errors.add(new Error(ident.getLineNumber(), ErrorType.c));
         }
         if (lVal.getExp() != null) {
@@ -253,7 +364,7 @@ public class Semantic {
     public void fFuncFParam(FuncFParam funcFParam) {
         // FuncFParam → BType Ident [ '[' ']' ]
         Token ident = funcFParam.getIdent();
-        if (currentSymbolTable.contains(ident.getContent())) {
+        if (currentSymbolTable.currentContains(ident.getContent())) {
             errors.add(new Error(funcFParam.getIdent().getLineNumber(), ErrorType.b));
         }
          if (funcFParam.getDimension() == 0) {
@@ -268,6 +379,21 @@ public class Semantic {
         for (BlockItem blockItem : block.getBlockItems()) {
             fBlockItem(blockItem);
         }
+        if (currentSymbolTable instanceof FuncSymbolTable funcSymbolTable) {
+            if (!block.getBlockItems().isEmpty()) {
+                if (funcSymbolTable.getReturnType() == 0 || funcSymbolTable.getReturnType() == 1) {
+                    if (block.getBlockItems().get(block.getBlockItems().size() - 1).getStmt() == null) {
+                        errors.add(new Error(block.getRbrace().getLineNumber(), ErrorType.g));
+                    } else if (block.getBlockItems().get(block.getBlockItems().size() - 1).getStmt().getReturntk() == null) {
+                        errors.add(new Error(block.getRbrace().getLineNumber(), ErrorType.g));
+                    }
+                }
+            } else {
+                if (funcSymbolTable.getReturnType() == 0 || funcSymbolTable.getReturnType() == 1) {
+                    errors.add(new Error(block.getRbrace().getLineNumber(), ErrorType.g));
+                }
+            }
+        }
     }
 
     public void fBlockItem(BlockItem blockItem) {
@@ -280,27 +406,41 @@ public class Semantic {
     }
 
     public void fStmt(Stmt stmt) {
-        /*    Stmt → LVal '=' Exp ';' // 每种类型的语句都要覆盖
-            | [Exp] ';' //有无Exp两种情况
+        /*    Stmt → LVal '=' Exp ';'
+            | [Exp] ';'
             | Block
-            | 'if' '(' Cond ')' Stmt [ 'else' Stmt ] // 1.有else 2.无else
-            | 'for' '(' [ForStmt] ';' [Cond] ';' [ForStmt] ')' Stmt // 1. 无缺省，1种情况 2.
+            | 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
+            | 'for' '(' [ForStmt] ';' [Cond] ';' [ForStmt] ')' Stmt
             ForStmt与Cond中缺省一个，3种情况 3. ForStmt与Cond中缺省两个，3种情况 4. ForStmt与Cond全部
             缺省，1种情况
             | 'break' ';' | 'continue' ';'
-            | 'return' [Exp] ';' // 1.有Exp 2.无Exp
+            | 'return' [Exp] ';'
             | LVal '=' 'getint''('')'';'
             | LVal '=' 'getchar''('')'';'
-            | 'printf''('StringConst {','Exp}')'';' // 1.有Exp 2.无Exp
+            | 'printf''('StringConst {','Exp}')'';'
 */
         switch (stmt.getType()) {
             case LValAssignExp:
+                Symbol symbol = currentSymbolTable.get(stmt.getLVal().getIdent().getContent());
+                if (symbol != null && symbol.isConst()) {
+                    errors.add(new Error(stmt.getLVal().getIdent().getLineNumber(), ErrorType.h));
+                }
                 fLVal(stmt.getLVal());
                 for (Exp exp : stmt.getExps()) {
                     fExp(exp);
                 }
                 break;
             case Exp:
+                for (Exp exp : stmt.getExps()) {
+                    fExp(exp);
+                }
+                break;
+            case Return:
+                SymbolTable father = getAncestorSymbolTable();
+                FuncSymbolTable funcSymbolTable = (FuncSymbolTable) father;
+                if (funcSymbolTable.getReturnType() == 2 && !stmt.getExps().isEmpty()) {    // void
+                    errors.add(new Error(stmt.getReturntk().getLineNumber(), ErrorType.f));
+                }
                 for (Exp exp : stmt.getExps()) {
                     fExp(exp);
                 }
@@ -329,20 +469,29 @@ public class Semantic {
                 if (stmt.getForStmt2() != null) {
                     fForStmt(stmt.getForStmt2());
                 }
+                loopCount++;
                 fStmt(stmt.getStmt());
+                loopCount--;
                 break;
-            case Return:
-                for (Exp exp : stmt.getExps()) {
-                    fExp(exp);
+            case Break, Continue:
+                if (loopCount == 0) {
+                    errors.add(new Error(stmt.getBreakOrcontinuetk().getLineNumber(), ErrorType.m));
                 }
                 break;
-            case LValAssignGetint:
-                fLVal(stmt.getLVal());
-                break;
-            case LValAssignGetchar:
+            case LValAssignGetint, LValAssignGetchar:
+                Symbol symbol1 = currentSymbolTable.get(stmt.getLVal().getIdent().getContent());
+                if (symbol1.isConst()) {
+                    errors.add(new Error(stmt.getLVal().getIdent().getLineNumber(), ErrorType.h));
+                }
                 fLVal(stmt.getLVal());
                 break;
             case Printf:
+                Token strcon = stmt.getStrcon();
+                String content = strcon.getContent();
+                int totalCount = countFormat(content, "%d") + countFormat(content, "%c");
+                if (stmt.getExps().size() != totalCount) {
+                    errors.add(new Error(stmt.getPrinttk().getLineNumber(), ErrorType.l));
+                }
                 for (Exp exp : stmt.getExps()) {
                     fExp(exp);
                 }
@@ -352,6 +501,10 @@ public class Semantic {
 
     public void fForStmt(ForStmt forStmt) {
         // ForStmt → LVal '=' Exp
+        Symbol symbol = currentSymbolTable.get(forStmt.getLVal().getIdent().getContent());
+        if (symbol.isConst()) {
+            errors.add(new Error(forStmt.getLVal().getIdent().getLineNumber(), ErrorType.h));
+        }
         fLVal(forStmt.getLVal());
         fExp(forStmt.getExp());
     }
@@ -388,5 +541,23 @@ public class Semantic {
          for (AddExp addExp : relExp.getAddExps()) {
             fAddExp(addExp);
          }
+    }
+
+    public static int countFormat(String input, String format) {
+        Pattern pattern = Pattern.compile(format);
+        Matcher matcher = pattern.matcher(input);
+        int count = 0;
+        while (matcher.find()) {
+            count++;
+        }
+        return count;
+    }
+
+    public SymbolTable getAncestorSymbolTable() {
+        SymbolTable temp = currentSymbolTable;
+        while (!(temp instanceof FuncSymbolTable)) {
+            temp = temp.getParent();
+        }
+        return temp;
     }
 }

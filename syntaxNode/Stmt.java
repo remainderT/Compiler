@@ -115,7 +115,6 @@ public class Stmt implements BasciNode {
         this.stmtElse = stmtElse;
     }
 
-
     public Stmt(StmtTpye type,Token fortk, Token lparent,  ForStmt forStmt1, Token forSemicn1, Cond cond, Token forSemicn2, ForStmt forStmt2, Token rparent, Stmt stmt) {
         this.type = type;      // 'for' '(' [ForStmt] ';' [Cond] ';' [ForStmt] ')' Stmt
         this.fortk = fortk;
@@ -163,6 +162,26 @@ public class Stmt implements BasciNode {
 
     public List<Exp> getExps() {
         return exps;
+    }
+
+    public Token getReturntk() {
+        return returntk;
+    }
+
+    public Token getBreakOrcontinuetk() {
+        return breakOrcontinuetk;
+    }
+
+    public Token getStrcon() {
+        return strcon;
+    }
+
+    public Token getPrinttk() {
+        return printtk;
+    }
+
+    public Token getReturn() {
+        return returntk;
     }
 
     @Override

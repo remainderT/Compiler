@@ -30,6 +30,10 @@ public class LVal implements BasciNode {
         return exp;
     }
 
+    public Token getLbrack() {
+        return lbrack;
+    }
+
     @Override
     public void print() {
         IO.dealSyntax(ident.toString());

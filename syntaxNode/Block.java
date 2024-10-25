@@ -26,6 +26,10 @@ public class Block implements BasciNode {
         return blockItems;
     }
 
+    public Token getRbrace() {
+        return rbrace;
+    }
+
     @Override
     public void print() {
         IO.dealSyntax(lbrace.toString());

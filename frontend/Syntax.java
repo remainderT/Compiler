@@ -44,7 +44,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class Syntax {
+public class
+Syntax {
     private List<Token> tokens;
     private List<Error> errors;
     private Token now;
@@ -182,8 +183,9 @@ public class Syntax {
         //  FuncFParams → FuncFParam { ',' FuncFParam }
         List<FuncFParam> funcFParams = new ArrayList<>();
         List<Token> commas = new ArrayList<>();
-
-        funcFParams.add(pFuncFParam());
+        if (now.getType() != TokenType.LBRACE) {
+            funcFParams.add(pFuncFParam());
+        }
         while (now.getType() == TokenType.COMMA) {
             commas.add(now);
             next();
@@ -439,9 +441,7 @@ public class Syntax {
                 lparent = now;
                 next();
             }
-            if (now.getType() != TokenType.RPARENT) {
-                funcRParams = pFuncRParams();
-            }
+            funcRParams = pFuncRParams();
             if (now.getType() == TokenType.RPARENT) {
                 rparent = now;
                 next();
@@ -463,7 +463,9 @@ public class Syntax {
        //  FuncRParams → Exp { ',' Exp }
         List<Exp> exps = new ArrayList<>();
         List<Token> commas = new ArrayList<>();
-        exps.add(pExp());
+        if (isExp()) {
+            exps.add(pExp());
+        }
         while (now.getType() == TokenType.COMMA) {
             commas.add(now);
             next();
@@ -646,7 +648,7 @@ public class Syntax {
         } else if (now.getType() == TokenType.RETURNTK) {  // return
             returntk =  now;
             next();
-            if (now.getType() != TokenType.SEMICN) {
+            if (isExp()) {
                 exps.add(pExp());
             }
             if (now.getType() == TokenType.SEMICN) {
@@ -695,10 +697,10 @@ public class Syntax {
                 if (now.getType() == TokenType.RPARENT) {
                     rparent = now;
                     next();
-                    stmt = pStmt();
                 } else {
                     errors.add(new Error(tokens.get(index-1).getLineNumber(), ErrorType.j));
                 }
+                stmt = pStmt();
                 if (now.getType() == TokenType.ELSETK) {
                     elsetk = now;
                     next();
@@ -742,7 +744,7 @@ public class Syntax {
                   | LVal '=' 'getint''('')'';'
                   | LVal '=' 'getchar''('')'';'
 */
-            boolean isAssign = judge();
+            boolean isAssign = assignJudge();
             if (isAssign) {
                 lval = pLVal();
                 if (now.getType() == TokenType.ASSIGN) {
@@ -788,7 +790,7 @@ public class Syntax {
                     return new Stmt(StmtTpye.LValAssignExp, lval, assign, exps, semicn);
                 }
             } else {                    // [Exp] ';'
-                if (now.getType() != TokenType.SEMICN) {
+                if (isExp()) {
                     exps.add(pExp());
                 }
                 if (now.getType() == TokenType.SEMICN) {
@@ -802,30 +804,14 @@ public class Syntax {
         }
     }
 
-    private Boolean judge() {
-        int index = 0;
-        for (int i=0; i < tokens.size(); i++) {
-            if (tokens.get(i) == now) {
-                index = i;
-            }
-        }
-        int assign = index, semicn = index;
-        for (int i=index; i<tokens.size(); i++) {
+    private Boolean assignJudge() {
+        int assign = index;
+        for (int i = index; i < tokens.size() && tokens.get(i).getLineNumber() == tokens.get(index).getLineNumber(); i++) {
             if (tokens.get(i).getType() == TokenType.ASSIGN) {
                 assign = i;
-                break;
             }
         }
-        assign = assign > index ? assign : -1;
-        if (assign == -1)
-            return false;
-        for (int i=index; i<tokens.size(); i++) {
-            if (tokens.get(i).getType() == TokenType.SEMICN) {
-                semicn = i;
-                break;
-            }
-        }
-        return assign < semicn ? true : false;
+        return assign > index;
     }
 
     private Number pNumber() {
@@ -995,5 +981,16 @@ public class Syntax {
     public void print() {
         this.compUnit.print();
     }
+
+    private boolean isExp() {
+        return  now.getType() == TokenType.IDENFR ||
+                now.getType() == TokenType.PLUS ||
+                now.getType() == TokenType.MINU ||
+                now.getType() == TokenType.NOT ||
+                now.getType() == TokenType.LPARENT ||
+                now.getType() == TokenType.INTCON ||
+                now.getType() == TokenType.CHRCON;
+    }
+
 
 }

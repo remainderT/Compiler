@@ -1,0 +1,12 @@
+!*.java
+!*.json
+!src/
+!src/**
+!Compiler.java
+.idea/
+out/
+*.class
+*.jar
+*.war
+*.txt
+*.iml

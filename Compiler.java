@@ -17,9 +17,9 @@ public class Compiler {
         List<Token> tokens = lexer.analyze();
         Syntax syntax = new Syntax(tokens, errors);
         syntax.analyze();
-        Semantic semantic = new Semantic(errors);
-        semantic.fCompUnit(syntax.getCompUnit());
-        if (errors.size() == 0) {
+        Semantic semantic = new Semantic(syntax.getCompUnit(), errors);
+        semantic.fCompUnit();
+        if (errors.isEmpty()) {
             IO.dealStdout(semantic, syntax);
         } else{
             IO.dealStderr(errors);

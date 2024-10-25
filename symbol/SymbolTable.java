@@ -30,19 +30,28 @@ public class SymbolTable {
         return index;
     }
 
-    public boolean get(String ident) {
+    public Symbol get(String ident) {
         Symbol symbol = symbols.get(ident);
         if (symbol != null) {
-            return true;
+            return symbol;
         } else if (parent != null) {
             return parent.get(ident);
+        }
+        return null;
+    }
+
+    public boolean currentContains(String ident) {
+        if (symbols.containsKey(ident)) {
+            return true;
         }
         return false;
     }
 
-    public boolean contains(String ident) {
+    public boolean parentContains(String ident) {
         if (symbols.containsKey(ident)) {
             return true;
+        } else if (parent != null) {
+            return parent.parentContains(ident);
         }
         return false;
     }
