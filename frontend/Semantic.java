@@ -89,6 +89,10 @@ public class Semantic {
         return symbolTables;
     }
 
+    public CompUnit getCompUnit() {
+        return compUnit;
+    }
+
     public void fCompUnit() {
         // CompUnit -> {Decl} {FuncDef} MainFuncDef
         for (Decl decl : compUnit.getDecls()) {

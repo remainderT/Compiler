@@ -19,6 +19,10 @@ public class MulExp implements BasciNode {
         this.operators = operators;
     }
 
+    public List<Token> getOperators() {
+        return operators;
+    }
+
     public List<UnaryExp> getUnaryExps() {
         return unaryExps;
     }

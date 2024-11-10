@@ -51,6 +51,10 @@ public class UnaryExp implements BasciNode {
         return unaryExp;
     }
 
+    public UnaryOp getUnaryOp() {
+        return unaryOp;
+    }
+
     @Override
     public void print() {
         if (primaryExp != null) {

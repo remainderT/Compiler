@@ -24,6 +24,22 @@ public class Symbol {
         return type;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public int getDimension() {
+        return dimension;
+    }
+
+    public int getBType() {
+        return bType;
+    }
+
+    public int getFuncType() {
+        return FuncType;
+    }
+
     public Boolean isConst() {
         return isConst == 1;
     }

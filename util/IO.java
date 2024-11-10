@@ -6,6 +6,7 @@ import common.Error;
 import frontend.Semantic;
 import frontend.Syntax;
 import frontend.Token;
+import llvm.IRModule;
 import symbol.Symbol;
 import symbol.SymbolTable;
 
@@ -25,7 +26,7 @@ public class IO {
     private static String STDIN_PATH;
     private static String STDOUT_PATH;
     private static String STDERR_PATH;
-    private static int stage = 3;
+    private static int stage = 4;
 
     private static HashMap<Integer, String> map = new HashMap<>();
 
@@ -35,7 +36,7 @@ public class IO {
         map.put(1, "lexer.txt");  // lexical_analysis
         map.put(2, "parser.txt");   // syntax_analysis
         map.put(3, "symbol.txt");  // semantic_analysis
-        // map.put(4, "code_generation");
+        map.put(4, "llvm_ir.txt");
          setStdoutPath(map.get(stage));
      }
 
@@ -67,7 +68,7 @@ public class IO {
         return content.toString();
     }
 
-    public static void dealStdout(Semantic semantic, Syntax parser) {
+    public static void dealStdout(IRModule irModule, Semantic semantic, Syntax parser) {
         switch (stage) {
             case 1:
                 dealLexical(parser.getTokens());
@@ -79,6 +80,7 @@ public class IO {
                 dealSemantic(semantic);
                 break;
             case 4:
+                irModule.print();
                 break;
         }
 
@@ -110,6 +112,15 @@ public class IO {
                     writer.write(symbolTable.getIndex() + " " + symbol.toString() + "\n");
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void dealLLVMGeneration(String content) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(STDOUT_PATH, !isFirstWrite))) {
+            writer.write(content);
+            isFirstWrite = false;  // 第一次写入后将标记设为 false
         } catch (IOException e) {
             e.printStackTrace();
         }

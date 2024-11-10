@@ -24,6 +24,10 @@ public class AddExp implements BasciNode {
         return mulExps;
     }
 
+    public List<Token> getOperations() {
+        return operations;
+    }
+
     @Override
     public void print() {
         mulExps.get(0).print();

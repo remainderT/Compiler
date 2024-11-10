@@ -3,6 +3,8 @@ import frontend.Lexer;
 import frontend.Semantic;
 import frontend.Syntax;
 import frontend.Token;
+import llvm.IRModule;
+import llvm.LLVMGenerator;
 import util.IO;
 
 import java.util.ArrayList;
@@ -19,8 +21,11 @@ public class Compiler {
         syntax.analyze();
         Semantic semantic = new Semantic(syntax.getCompUnit(), errors);
         semantic.fCompUnit();
+        LLVMGenerator generator = new LLVMGenerator(semantic);
+        generator.Generate();
+        IRModule module = IRModule.getInstance();
         if (errors.isEmpty()) {
-            IO.dealStdout(semantic, syntax);
+            IO.dealStdout(module, semantic, syntax);
         } else{
             IO.dealStderr(errors);
         }

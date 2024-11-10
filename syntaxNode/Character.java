@@ -16,6 +16,10 @@ public class Character implements BasciNode {
         this.chrcon = chrcon;
     }
 
+    public Token getChrcon() {
+        return chrcon;
+    }
+
     @Override
     public void print() {
         IO.dealSyntax(chrcon.toString());

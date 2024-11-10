@@ -16,6 +16,10 @@ public class Number implements BasciNode {
         this.intcon = intcon;
     }
 
+    public Token getIntcon() {
+        return intcon;
+    }
+
     @Override
     public void print() {
         IO.dealSyntax(intcon.toString());

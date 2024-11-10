@@ -15,6 +15,10 @@ public class UnaryOp implements BasciNode {
         this.unaryOp = unaryOp;
     }
 
+    public Token getToken() {
+        return unaryOp;
+    }
+
     @Override
     public void print() {
         IO.dealSyntax(unaryOp.toString());
