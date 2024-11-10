@@ -1,8 +1,8 @@
+import common.Error;
 import frontend.Lexer;
 import frontend.Semantic;
 import frontend.Syntax;
 import frontend.Token;
-import common.Error;
 import util.IO;
 
 import java.util.ArrayList;
