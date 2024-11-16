@@ -23,6 +23,7 @@ import syntaxNode.ConstDef;
 import syntaxNode.Decl;
 import syntaxNode.Exp;
 import syntaxNode.FuncDef;
+import syntaxNode.InitVal;
 import syntaxNode.LVal;
 import syntaxNode.MainFuncDef;
 import syntaxNode.MulExp;
@@ -55,6 +56,10 @@ public class LLVMGenerator {
     private BasicBlock currentBlock;
 
     private Boolean isGlobal = false;
+
+    private Boolean isConst = false;
+
+    private Type currentType;
 
     private int blockNum = 0;
 
@@ -126,6 +131,7 @@ public class LLVMGenerator {
 
     public void gVarDecl(VarDecl varDecl) {
         // VarDecl → BType VarDef { ',' VarDef } ';'
+        currentType = varDecl.getBType().getToken().getType() == TokenType.INTTK ? IntegerType.I32 : IntegerType.I8;
         for (VarDef varDef : varDecl.getVarDefs()) {
             gVarDef(varDef);
         }
@@ -133,7 +139,39 @@ public class LLVMGenerator {
 
     public void gVarDef(VarDef varDef) {
         // VarDef → Ident [ '[' ConstExp ']' ] | Ident [ '[' ConstExp ']' ] '=' InitVal
+        String name = varDef.getIdent().getContent();
+        if (varDef.getDimension() == 0) {
+            if (varDef.getInitVal() != null) {
+                gInitVal(varDef.getInitVal());
+            }
+            if (isGlobal) {
 
+            } else {
+                Value value = !valueStack.empty() ? valueStack.pop() : null;
+                Instruction inst1 = ValueFactory.getAllocaInst(currentBlock, isConst, currentType);
+                currentBlock.addInstruction(inst1);
+                if (value != null) {
+                    if (currentType != value.getType()) {
+                        Instruction inst3 = ValueFactory.getConvInst(currentBlock, value);
+                        currentBlock.addInstruction(inst3);
+                        value = inst3;
+                    }
+                    Instruction inst2 = ValueFactory.getStoreInst(value, inst1);
+                    currentBlock.addInstruction(inst2);
+                }
+            }
+        }
+    }
+
+    public void gInitVal(InitVal initVal) {
+        // InitVal → Exp | '{' [ Exp { ',' Exp } ] '}' | StringConst
+        if (initVal.getExps() != null) {
+            for (Exp exp : initVal.getExps()) {
+                gExp(exp);
+            }
+        } else {
+            // StringConst
+        }
     }
 
     public void gFuncDef(FuncDef funcDef) {
@@ -336,8 +374,6 @@ public class LLVMGenerator {
         // FuncRParams → Exp { ',' Exp }
     }
 
-    public void gInitVal() {
-        // InitVal → Exp | '{' [ Exp { ',' Exp } ] '}' | StringConst
-    }
+
 
 }
