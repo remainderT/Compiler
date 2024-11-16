@@ -1,9 +1,10 @@
-package llvm;
+package util;
 
 import llvm.types.IntegerType;
 import llvm.types.Type;
 import llvm.values.BasicBlock;
 import llvm.values.Value;
+import llvm.values.constants.GlobalVar;
 import llvm.values.constants.IntConst;
 import llvm.values.instructions.AllocaInst;
 import llvm.values.instructions.BinaryInst;
@@ -23,6 +24,10 @@ public class ValueFactory {
         } else {
             return new IntConst(Integer.parseInt(number), IntegerType.I32);
         }
+    }
+
+    public static GlobalVar getGlobalVar(String name, Type type, boolean isConst, Value value) {
+        return new GlobalVar(name, type, isConst, value);
     }
 
     // instructions
