@@ -4,8 +4,11 @@ import llvm.types.Type;
 
 public class Arguement extends Value {
 
-    public Arguement(String name, Type type) {
-        super(name, type);
+    private int index; // 从1开始
+
+    public Arguement(Type type, int index) {
+        super("%" + (index-1), type);
+        this.index = index;
     }
 
 }

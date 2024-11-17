@@ -19,6 +19,7 @@ public class BinaryInst extends Instruction {
         setType(left.getType());
     }
 
+    @Override
     public void print() {
         IO.dealLLVMGeneration("    " + super.getName() + " = " + super.getOperator().toString().toLowerCase() + " nsw ");
         IO.dealLLVMGeneration(left.getType() + " ");

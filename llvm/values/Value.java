@@ -1,11 +1,8 @@
 package llvm.values;
 
-import llvm.IRModule;
 import llvm.types.Type;
 
 public class Value {
-
-    private final IRModule irModule = IRModule.getInstance();
 
     private String name;
 
@@ -30,10 +27,6 @@ public class Value {
 
     public void setType(Type type) {
         this.type = type;
-    }
-
-    public IRModule getModule() {
-        return irModule;
     }
 
 }

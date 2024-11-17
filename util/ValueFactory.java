@@ -2,8 +2,10 @@ package util;
 
 import llvm.types.IntegerType;
 import llvm.types.Type;
+import llvm.values.Arguement;
 import llvm.values.BasicBlock;
 import llvm.values.Value;
+import llvm.values.constants.Function;
 import llvm.values.constants.GlobalVar;
 import llvm.values.constants.IntConst;
 import llvm.values.instructions.AllocaInst;
@@ -15,11 +17,13 @@ import llvm.values.instructions.Operator;
 import llvm.values.instructions.RetInst;
 import llvm.values.instructions.StoreInst;
 
+import java.util.List;
+
 public class ValueFactory {
 
     public static IntConst getIntConst(String number, Boolean isChar) {
         if (isChar) {
-            return new IntConst((int) number.charAt(1), IntegerType.I8);
+            return new IntConst(number.charAt(0), IntegerType.I8);
         } else {
             return new IntConst(Integer.parseInt(number), IntegerType.I32);
         }
@@ -29,9 +33,13 @@ public class ValueFactory {
         return new GlobalVar(name, type, isConst, value);
     }
 
+    public static Arguement getArguement(Type type, int index) {
+        return new Arguement(type, index);
+    }
+
     // instructions
-    public static CallInst getCallInst() {
-        return new CallInst();
+    public static CallInst getCallInst(BasicBlock basicBlock, Function function, List<Value> params) {
+        return new CallInst(basicBlock, function, params);
     }
 
     public static LoadInst getLoadInst(BasicBlock basicBlock, Value value) {

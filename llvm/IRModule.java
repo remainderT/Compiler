@@ -41,7 +41,5 @@ public class IRModule {
         }
 
         functions.get(functions.size() - 1).print();
-
-
     }
 }

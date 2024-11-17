@@ -7,12 +7,15 @@ import llvm.types.IntegerType;
 import llvm.types.PointerType;
 import llvm.types.Type;
 import llvm.types.VoidType;
+import llvm.values.Arguement;
 import llvm.values.BasicBlock;
 import llvm.values.Instruction;
 import llvm.values.Value;
 import llvm.values.constants.Function;
 import llvm.values.constants.GlobalVar;
+import llvm.values.instructions.AllocaInst;
 import llvm.values.instructions.Operator;
+import llvm.values.instructions.StoreInst;
 import syntaxNode.AddExp;
 import syntaxNode.Block;
 import syntaxNode.BlockItem;
@@ -24,6 +27,8 @@ import syntaxNode.ConstInitVal;
 import syntaxNode.Decl;
 import syntaxNode.Exp;
 import syntaxNode.FuncDef;
+import syntaxNode.FuncFParam;
+import syntaxNode.FuncFParams;
 import syntaxNode.InitVal;
 import syntaxNode.LVal;
 import syntaxNode.MainFuncDef;
@@ -91,9 +96,8 @@ public class LLVMGenerator {
         currentSymbolTable = new LLVMSymbolTable(index++, null);
         symbolTables.add(currentSymbolTable);
 
-
         Function getInt = new Function("getint", new FunctionType(IntegerType.I32, new ArrayList<>()), true);
-        Function getChar = new Function("getchar", new FunctionType(IntegerType.I8, new ArrayList<>()), true);
+        Function getChar = new Function("getchar", new FunctionType(IntegerType.I32, new ArrayList<>()), true);
         Function putInt = new Function("putint", new FunctionType(VoidType.Void, List.of(IntegerType.I32)), true);
         Function putCh = new Function("putch", new FunctionType(VoidType.Void, List.of(IntegerType.I32)), true);
         Function putStr = new Function("putstr", new FunctionType(VoidType.Void, List.of(new PointerType(IntegerType.I8))), true);
@@ -227,9 +231,9 @@ public class LLVMGenerator {
                         currentBlock.addInstruction(inst3);
                         value = inst3;
                     }
+                    Instruction inst2 = ValueFactory.getStoreInst(value, inst1);
+                    currentBlock.addInstruction(inst2);
                 }
-                Instruction inst2 = ValueFactory.getStoreInst(value, inst1);
-                currentBlock.addInstruction(inst2);
             }
         }
     }
@@ -247,13 +251,56 @@ public class LLVMGenerator {
 
     public void gFuncDef(FuncDef funcDef) {
         // FuncDef → FuncType Ident '(' [FuncFParams] ')' Block
-        Type returnType = funcDef.getFuncType().getToken().getType() == TokenType.INTTK ? IntegerType.I32 : IntegerType.I8;
+        LLVMSymbolTable next = new LLVMSymbolTable(index++, currentSymbolTable);
+        symbolTables.add(next);
+        currentSymbolTable = next;
+
+        Type returnType = funcDef.getFuncType().getToken().getType() == TokenType.INTTK ? IntegerType.I32 :
+                funcDef.getFuncType().getToken().getType() == TokenType.CHARTK ? IntegerType.I8 : VoidType.Void;
         List<Type> paramTypes = new ArrayList<>();
+        List<Arguement> args = new ArrayList<>();
+        gFuncFParams(funcDef.getFuncFParams(), paramTypes, args);
         Type functionType = new FunctionType(returnType, paramTypes);
+
         currentFunction = new Function(funcDef.getIdent().getContent(), functionType, false);
         irModule.addFunction(currentFunction);
-        currentSymbolTable.put(funcDef.getIdent().getContent(), currentFunction);
+        symbolTables.get(0).put(funcDef.getIdent().getContent(), currentFunction);
+
+        currentBlock = new BasicBlock("block", args.size());
+        for (int i= 0; i < args.size(); i++) {
+            Arguement arguement = args.get(i);
+            String name = funcDef.getFuncFParams().getFuncFParams().get(i).getIdent().getContent();
+            AllocaInst inst1 = ValueFactory.getAllocaInst(currentBlock, false, arguement.getType());
+            StoreInst inst2 = ValueFactory.getStoreInst(arguement, inst1);
+            currentBlock.addInstruction(inst1);
+            currentBlock.addInstruction(inst2);
+            currentSymbolTable.put(name, inst1);
+        }
+
         gBlock(funcDef.getBlock());
+        currentFunction.addBlock(currentBlock);
+
+        currentSymbolTable = currentSymbolTable.getFather();
+    }
+
+    public void gFuncFParams(FuncFParams funcFParams, List<Type> paramTypes, List<Arguement> args) {
+        // FuncFParams → FuncFParam { ',' FuncFParam }
+        if (funcFParams == null) {
+            return;
+        }
+        int index = 1;
+        for (FuncFParam funcFParam : funcFParams.getFuncFParams()) {
+            gFuncFParam(funcFParam, paramTypes, args, index++);
+        }
+    }
+
+    public void gFuncFParam(FuncFParam funcFParam, List<Type> paramTypes, List<Arguement> args, int index) {
+        // FuncFParam → BType Ident ['[' ']']
+        Type type = funcFParam.getBType().getToken().getType() == TokenType.INTTK ? IntegerType.I32 : IntegerType.I8;
+        paramTypes.add(type);
+        Arguement arguement = ValueFactory.getArguement(type, index);
+        args.add(arguement);
+        currentSymbolTable.put(funcFParam.getIdent().getContent(), arguement);
     }
 
     public void gMainFuncDef(MainFuncDef mainFuncDef) {
@@ -308,12 +355,14 @@ public class LLVMGenerator {
             Exp exp = stmt.getExps().get(0);
             gExp(exp);
             Value value = valueStack.pop();
-            Value lValValue = getValue(lVal.getIdent().getContent());
-            Instruction inst = ValueFactory.getStoreInst(value, lValValue);
+            Value addr = getValue(lVal.getIdent().getContent());
+            Instruction inst = ValueFactory.getStoreInst(value, addr);
             currentBlock.addInstruction(inst);
         } else if (stmt.getType() == Exp) {
-
-
+            if (!stmt.getExps().isEmpty()) {
+                gExp(stmt.getExps().get(0));
+                valueStack.pop();
+            }
         } else if (stmt.getType() == Return) {
             Value value = null;
             if (!stmt.getExps().isEmpty()) {
@@ -336,10 +385,52 @@ public class LLVMGenerator {
 
         } else if (stmt.getType() == Break || stmt.getType() == Continue) {
 
-        } else if (stmt.getType() == LValAssignGetint || stmt.getType() == LValAssignGetchar) {
-
+        } else if (stmt.getType() == LValAssignGetint) {
+            LVal lVal = stmt.getLVal();
+            Value addr = getValue(lVal.getIdent().getContent());
+            Instruction inst1 = ValueFactory.getCallInst(currentBlock, (Function) getValue("getint"),new ArrayList<>());
+            currentBlock.addInstruction(inst1);
+            Instruction inst2 = ValueFactory.getStoreInst(inst1, addr);
+            currentBlock.addInstruction(inst2);
+        } else if (stmt.getType() == LValAssignGetchar) {
+            LVal lVal = stmt.getLVal();
+            Value addr = getValue(lVal.getIdent().getContent());
+            Instruction inst1 = ValueFactory.getCallInst(currentBlock, (Function) getValue("getchar"),new ArrayList<>());
+            currentBlock.addInstruction(inst1);
+            Instruction inst2 = ValueFactory.getConvInst(currentBlock, inst1);
+            currentBlock.addInstruction(inst2);
+            Instruction inst3 = ValueFactory.getStoreInst(inst2, addr);
+            currentBlock.addInstruction(inst3);
         } else if (stmt.getType() == Printf) {
-
+            String format = stmt.getStrcon().getContent();
+            format = format.replace("\\n","\n");
+            int paramIndex = 0;
+            for (int i =1 ; i < format.length()-1; i++) {
+                List<Value> params = new ArrayList<>();
+                if (format.charAt(i) == '%' && (format.charAt(i+1) == 'c' || format.charAt(i+1) == 'd')) {
+                    if (format.charAt(i+1) == 'd') {
+                        gExp(stmt.getExps().get(paramIndex++));
+                        Value value = valueStack.pop();
+                        params.add(value);
+                        Instruction inst = ValueFactory.getCallInst(currentBlock, (Function) getValue("putint"), params);
+                        currentBlock.addInstruction(inst);
+                    } else if (format.charAt(i+1) == 'c') {
+                        gExp(stmt.getExps().get(paramIndex++));
+                        Value value = valueStack.pop();
+                        Instruction inst1 = ValueFactory.getConvInst(currentBlock, value);
+                        currentBlock.addInstruction(inst1);
+                        params.add(inst1);
+                        Instruction inst = ValueFactory.getCallInst(currentBlock, (Function) getValue("putch"), params);
+                        currentBlock.addInstruction(inst);
+                    }
+                    i++;
+                } else {
+                    Value value = ValueFactory.getIntConst(String.valueOf(format.charAt(i)), true);
+                    params.add(value);
+                    Instruction inst = ValueFactory.getCallInst(currentBlock, (Function) getValue("putch"), params);
+                    currentBlock.addInstruction(inst);
+                }
+            }
         }
     }
 
@@ -398,7 +489,17 @@ public class LLVMGenerator {
         if (unaryExp.getPrimaryExp() != null) {
             gPrimaryExp(unaryExp.getPrimaryExp());
         } else if (unaryExp.getIdent() != null) {
-
+            Function function = ((Function) getValue(unaryExp.getIdent().getContent()));
+            ArrayList<Value> params = new ArrayList<>();
+            for (int i = 0;i < unaryExp.getFuncRParams().getExps().size(); i++) {
+                Exp exp = unaryExp.getFuncRParams().getExps().get(i);
+                gExp(exp);
+                Value value = valueStack.pop();
+                params.add(value);
+            }
+            Instruction inst = ValueFactory.getCallInst(currentBlock, function, params);
+            valueStack.add(inst);
+            currentBlock.addInstruction(inst);
         } else {
             Operator op = unaryExp.getUnaryOp().getToken().getType() == TokenType.PLUS ? Operator.Add : Operator.Sub;
             Value left = ValueFactory.getIntConst("0", false);
@@ -449,14 +550,6 @@ public class LLVMGenerator {
         } else {
             // Array
         }
-    }
-
-    public void gFuncFParams() {
-        // FuncFParams → FuncFParam { ',' FuncFParam }
-    }
-
-    public void gFuncFParam() {
-        // FuncFParam → BType Ident ['[' ']']
     }
 
     public void gFuncRParams() {

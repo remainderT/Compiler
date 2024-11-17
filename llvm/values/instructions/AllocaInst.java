@@ -9,21 +9,20 @@ public class AllocaInst extends Instruction {
 
     private boolean isConst;
 
-    private Type allocaType;
+    private Type type;
 
     public AllocaInst(BasicBlock basicBlock, boolean isConst, Type allocaType) {
         super(Operator.Alloca);
         super.setType(allocaType);
-        this.setName("%" + basicBlock.getRegNumAndPlus());
+        setName("%" + basicBlock.getRegNumAndPlus());
         this.isConst = isConst;
-        this.allocaType = allocaType;
+        this.type = allocaType;
 
     }
 
+    @Override
     public void print() {
-        IO.dealLLVMGeneration("    " + super.getName() + " = alloca ");
-        IO.dealLLVMGeneration(allocaType.toString());
-        IO.dealLLVMGeneration("\n");
+        IO.dealLLVMGeneration("    " + super.getName() + " = alloca " + type.toString() + "\n");
     }
 
 }

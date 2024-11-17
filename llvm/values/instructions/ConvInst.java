@@ -17,14 +17,15 @@ public class ConvInst extends Instruction {
 
     public ConvInst(BasicBlock basicBlock, Operator op, Value value){
         super(op);
-        this.setName("%" + basicBlock.getRegNumAndPlus());
+        setName("%" + basicBlock.getRegNumAndPlus());
         Type type = op == Operator.Trunc ? IntegerType.I8 : IntegerType.I32;
-        this.setType(type);
+        setType(type);
         this.from = value.getType();
         this.to = type;
         this.value = value;
     }
 
+    @Override
     public void print(){
         IO.dealLLVMGeneration("    " + super.getName() + " = " + super.getOperator().toString().toLowerCase() + " ");
         IO.dealLLVMGeneration(from.toString() + " " + value.getName() + " to " + to.toString());

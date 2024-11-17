@@ -4,17 +4,17 @@ import java.util.List;
 
 public class FunctionType implements Type {
 
-    private List<Type> parametersType;
+    private List<Type> paramTypes;
 
     private Type returnType;
 
-    public FunctionType(Type returnType, List<Type> parametersType) {
+    public FunctionType(Type returnType, List<Type> paramsType) {
         this.returnType = returnType;
-        this.parametersType = parametersType;
+        this.paramTypes = paramsType;
     }
 
-    public List<Type> getParametersType() {
-        return parametersType;
+    public List<Type> getParamTypes() {
+        return paramTypes;
     }
 
     public Type getReturnType() {

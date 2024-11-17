@@ -21,6 +21,7 @@ public class LoadInst extends Instruction {
         addr = new PointerType(value.getType());
     }
 
+    @Override
     public void print() {
         IO.dealLLVMGeneration("    " + super.getName() + " = load ");
         IO.dealLLVMGeneration(value.getType().toString());
