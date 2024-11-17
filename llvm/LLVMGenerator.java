@@ -1,7 +1,6 @@
 package llvm;
 
 import common.TokenType;
-import frontend.Semantic;
 import frontend.Token;
 import llvm.types.FunctionType;
 import llvm.types.IntegerType;
@@ -14,8 +13,6 @@ import llvm.values.Value;
 import llvm.values.constants.Function;
 import llvm.values.constants.GlobalVar;
 import llvm.values.instructions.Operator;
-import symbol.Symbol;
-import symbol.SymbolTable;
 import syntaxNode.AddExp;
 import syntaxNode.Block;
 import syntaxNode.BlockItem;
@@ -42,46 +39,59 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
+import static common.StmtTpye.Block;
+import static common.StmtTpye.Break;
+import static common.StmtTpye.Continue;
+import static common.StmtTpye.Exp;
+import static common.StmtTpye.For;
+import static common.StmtTpye.If;
+import static common.StmtTpye.LValAssignExp;
+import static common.StmtTpye.LValAssignGetchar;
+import static common.StmtTpye.LValAssignGetint;
+import static common.StmtTpye.Printf;
+import static common.StmtTpye.Return;
+
 public class LLVMGenerator {
 
     int index = 0;
 
     private final IRModule irModule = IRModule.getInstance();
 
-    private Semantic semantic;
+    private final CompUnit compUnit;
 
     private List<LLVMSymbolTable> symbolTables;
 
-    private List<SymbolTable> oldSymbolTables;
-
     private LLVMSymbolTable currentSymbolTable;
 
-    private Stack<Value> valueStack = new Stack<>();
+    private Stack<Value> valueStack;
 
     private BasicBlock currentBlock;
 
-    private Boolean isGlobal = true;
+    private Function currentFunction;
 
-    private Boolean isConst = true;
+    private Boolean isGlobal;
+
+    private Boolean isConst;
 
     private Type currentType;
 
-    public LLVMGenerator(Semantic semantic) {
-        this.semantic = semantic;
-        this.oldSymbolTables = semantic.getSymbolTables();
-        this.symbolTables = new ArrayList<>();
+    public LLVMGenerator(CompUnit compUnit) {
+        this.compUnit = compUnit;
     }
 
     public void Generate() {
-        gCompUnit(semantic.getCompUnit());
-    }
-
-    public SymbolTable getCurrentOldSymbolTable() {
-        return oldSymbolTables.get(index);
+        gCompUnit(compUnit);
     }
 
     public void init() {
-        currentSymbolTable = new LLVMSymbolTable(index++);
+        isConst = true;
+        isGlobal = true;
+        valueStack = new Stack<>();
+        symbolTables = new ArrayList<>();
+        currentSymbolTable = new LLVMSymbolTable(index++, null);
+        symbolTables.add(currentSymbolTable);
+
+
         Function getInt = new Function("getint", new FunctionType(IntegerType.I32, new ArrayList<>()), true);
         Function getChar = new Function("getchar", new FunctionType(IntegerType.I8, new ArrayList<>()), true);
         Function putInt = new Function("putint", new FunctionType(VoidType.Void, List.of(IntegerType.I32)), true);
@@ -97,6 +107,7 @@ public class LLVMGenerator {
         currentSymbolTable.put("putint", putInt);
         currentSymbolTable.put("putch", putCh);
         currentSymbolTable.put("putstr", putStr);
+
     }
 
     public void gCompUnit(CompUnit compUnit) {
@@ -105,11 +116,14 @@ public class LLVMGenerator {
         for (Decl decl : compUnit.getDecls()) {
             gDecl(decl);
         }
+
         isGlobal = false;
         isConst = false;
+
         for (FuncDef funcDef : compUnit.getFuncDefs()) {
             gFuncDef(funcDef);
         }
+
         gMainFuncDef(compUnit.getMainFuncDef());
     }
 
@@ -144,6 +158,7 @@ public class LLVMGenerator {
                 }
                 GlobalVar globalVar = ValueFactory.getGlobalVar(name, currentType, isConst, value);
                 irModule.addGlobalVar(globalVar);
+                currentSymbolTable.put(name, globalVar);
             } else {
                 Value value = !valueStack.empty() ? valueStack.pop() : null;
                 Instruction inst1 = ValueFactory.getAllocaInst(currentBlock, isConst, currentType);
@@ -189,29 +204,32 @@ public class LLVMGenerator {
         // VarDef → Ident [ '[' ConstExp ']' ] | Ident [ '[' ConstExp ']' ] '=' InitVal
         String name = varDef.getIdent().getContent();
         if (varDef.getDimension() == 0) {
-            if (varDef.getInitVal() != null) {
-                gInitVal(varDef.getInitVal());
-            }
             if (isGlobal) {
-                Value value = !valueStack.empty() ? valueStack.pop() : null;
-                if (value != null) {
+                Value value = null;
+                if (varDef.getInitVal() != null) {
+                    gInitVal(varDef.getInitVal());
+                    value = valueStack.pop();
                     value.setType(currentType);
                 }
                 GlobalVar globalVar = ValueFactory.getGlobalVar(name, currentType, isConst, value);
                 irModule.addGlobalVar(globalVar);
+                currentSymbolTable.put(name, globalVar);
             } else {
-                Value value = !valueStack.empty() ? valueStack.pop() : null;
                 Instruction inst1 = ValueFactory.getAllocaInst(currentBlock, isConst, currentType);
                 currentBlock.addInstruction(inst1);
-                if (value != null) {
+                currentSymbolTable.put(name, inst1);
+                Value value = null;
+                if (varDef.getInitVal() != null) {
+                    gInitVal(varDef.getInitVal());
+                    value =  valueStack.pop();
                     if (currentType != value.getType()) {
                         Instruction inst3 = ValueFactory.getConvInst(currentBlock, value);
                         currentBlock.addInstruction(inst3);
                         value = inst3;
                     }
-                    Instruction inst2 = ValueFactory.getStoreInst(value, inst1);
-                    currentBlock.addInstruction(inst2);
                 }
+                Instruction inst2 = ValueFactory.getStoreInst(value, inst1);
+                currentBlock.addInstruction(inst2);
             }
         }
     }
@@ -229,30 +247,30 @@ public class LLVMGenerator {
 
     public void gFuncDef(FuncDef funcDef) {
         // FuncDef → FuncType Ident '(' [FuncFParams] ')' Block
-        Symbol funSymbol = getCurrentOldSymbolTable().get(funcDef.getIdent().getContent());
-        Type returnType = funSymbol.getFuncType() == 0 ? IntegerType.I32 :
-            funSymbol.getFuncType() == 1 ? IntegerType.I8 : new VoidType();
+        Type returnType = funcDef.getFuncType().getToken().getType() == TokenType.INTTK ? IntegerType.I32 : IntegerType.I8;
         List<Type> paramTypes = new ArrayList<>();
-//        for (SemanticType paramType : funSymbol.getParamTypes()) {
-//            paramTypes.add(paramType == SemanticType.INT ? IntegerType.I32 : IntegerType.I8);
-//        }
         Type functionType = new FunctionType(returnType, paramTypes);
-        Function function = new Function(funcDef.getIdent().getContent(), functionType, false);
-
-        irModule.addFunction(function);
-        currentSymbolTable.put(funcDef.getIdent().getContent(), function);
+        currentFunction = new Function(funcDef.getIdent().getContent(), functionType, false);
+        irModule.addFunction(currentFunction);
+        currentSymbolTable.put(funcDef.getIdent().getContent(), currentFunction);
         gBlock(funcDef.getBlock());
     }
 
     public void gMainFuncDef(MainFuncDef mainFuncDef) {
         // MainFuncDef → 'int' 'main' '(' ')' Block
-        Function main = new Function("main", new FunctionType(VoidType.Void, new ArrayList<>()), false);
-        irModule.addFunction(main);
-        currentSymbolTable.put("main", main);
+        LLVMSymbolTable next = new LLVMSymbolTable(index++, currentSymbolTable);
+        symbolTables.add(next);
+        currentSymbolTable = next;
 
-        currentBlock = new BasicBlock("block", main.getRegNum());
+        currentFunction = new Function("main", new FunctionType(IntegerType.I32, new ArrayList<>()), false);
+        irModule.addFunction(currentFunction);
+        symbolTables.get(0).put("main", currentFunction);
+
+        currentBlock = new BasicBlock("block", currentFunction.getRegNum());
         gBlock(mainFuncDef.getBlock());
-        main.addBlock(currentBlock);
+        currentFunction.addBlock(currentBlock);
+
+        currentSymbolTable = currentSymbolTable.getFather();
     }
 
     public void gBlock(Block block) {
@@ -285,40 +303,43 @@ public class LLVMGenerator {
             | LVal '=' 'getchar''('')'';'
             | 'printf''('StringConst {','Exp}')'';'
 */
-        switch (stmt.getType()) {
-            case LValAssignExp:
+        if (stmt.getType() == LValAssignExp ) {
+            LVal lVal = stmt.getLVal();
+            Exp exp = stmt.getExps().get(0);
+            gExp(exp);
+            Value value = valueStack.pop();
+            Value lValValue = getValue(lVal.getIdent().getContent());
+            Instruction inst = ValueFactory.getStoreInst(value, lValValue);
+            currentBlock.addInstruction(inst);
+        } else if (stmt.getType() == Exp) {
 
-                break;
-            case Exp:
 
-                break;
-            case Return:
-                Value value = null;
-                if (!stmt.getExps().isEmpty()) {
-                    gExp(stmt.getExps().get(0));
-                    value = valueStack.pop();
-                }
-                Instruction inst = ValueFactory.getRetInst(value);
-                currentBlock.addInstruction(inst);
-                break;
-            case Block:
+        } else if (stmt.getType() == Return) {
+            Value value = null;
+            if (!stmt.getExps().isEmpty()) {
+                gExp(stmt.getExps().get(0));
+                value = valueStack.pop();
+            }
+            Instruction inst = ValueFactory.getRetInst(value);
+            currentBlock.addInstruction(inst);
+        } else if (stmt.getType() == Block) {
+            LLVMSymbolTable next = new LLVMSymbolTable(index++, currentSymbolTable);
+            symbolTables.add(next);
+            currentSymbolTable = next;
 
-                break;
-            case If:
+            gBlock(stmt.getBlock());
 
-                break;
-            case For:
+            currentSymbolTable = currentSymbolTable.getFather();
+        } else if (stmt.getType() == If) {
 
-                break;
-            case Break, Continue:
+        } else if (stmt.getType() == For) {
 
-                break;
-            case LValAssignGetint, LValAssignGetchar:
+        } else if (stmt.getType() == Break || stmt.getType() == Continue) {
 
-                break;
-            case Printf:
+        } else if (stmt.getType() == LValAssignGetint || stmt.getType() == LValAssignGetchar) {
 
-                break;
+        } else if (stmt.getType() == Printf) {
+
         }
     }
 
@@ -402,7 +423,6 @@ public class LLVMGenerator {
         }
     }
 
-
     public void gCond() {
         // Cond → LOrExp
     }
@@ -421,10 +441,14 @@ public class LLVMGenerator {
 
     public void gLVal(LVal lVal) {
         // LVal → Ident ['[' Exp ']']
-    }
-
-    public void gConstExp() {
-        // ConstExp -> AddExp
+        if (lVal.getDimension() == 0) {
+            Value value = getValue(lVal.getIdent().getContent());
+            Instruction inst = ValueFactory.getLoadInst(currentBlock, value);
+            valueStack.add(inst);
+            currentBlock.addInstruction(inst);
+        } else {
+            // Array
+        }
     }
 
     public void gFuncFParams() {
@@ -454,6 +478,16 @@ public class LLVMGenerator {
         return 0;
     }
 
-
+    public Value getValue(String name) {
+        LLVMSymbolTable tmp = currentSymbolTable;
+        while (tmp != null) {
+            Value value = tmp.get(name);
+            if (value != null) {
+                return value;
+            }
+            tmp = tmp.getFather();
+        }
+        return null;
+    }
 
 }

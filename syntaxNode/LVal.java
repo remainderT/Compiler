@@ -34,6 +34,10 @@ public class LVal implements BasciNode {
         return lbrack;
     }
 
+    public int getDimension() {
+        return lbrack == null ? 0 : 1;
+    }
+
     @Override
     public void print() {
         IO.dealSyntax(ident.toString());

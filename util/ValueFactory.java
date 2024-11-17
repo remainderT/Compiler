@@ -12,7 +12,6 @@ import llvm.values.instructions.CallInst;
 import llvm.values.instructions.ConvInst;
 import llvm.values.instructions.LoadInst;
 import llvm.values.instructions.Operator;
-import llvm.values.instructions.PhiInst;
 import llvm.values.instructions.RetInst;
 import llvm.values.instructions.StoreInst;
 
@@ -35,12 +34,8 @@ public class ValueFactory {
         return new CallInst();
     }
 
-    public static LoadInst getLoadInst() {
-        return new LoadInst();
-    }
-
-    public static PhiInst getPhiInst() {
-        return new PhiInst();
+    public static LoadInst getLoadInst(BasicBlock basicBlock, Value value) {
+        return new LoadInst(basicBlock, value);
     }
 
     public static RetInst getRetInst(Value value) {

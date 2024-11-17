@@ -6,12 +6,15 @@ import java.util.HashMap;
 
 public class LLVMSymbolTable {
 
-    int index; // 符号表编号
+    private int index; // 符号表编号
 
     private HashMap<String, Value> symbolTable;
 
-    public LLVMSymbolTable(int index) {
+    private LLVMSymbolTable father;
+
+    public LLVMSymbolTable(int index, LLVMSymbolTable father) {
         this.index = index;
+        this.father = father;
         this.symbolTable = new HashMap<>();
     }
 
@@ -21,6 +24,10 @@ public class LLVMSymbolTable {
 
     public Value get(String key) {
         return symbolTable.get(key);
+    }
+
+    public LLVMSymbolTable getFather() {
+        return father;
     }
 
 }

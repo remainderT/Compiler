@@ -32,11 +32,16 @@ public class IRModule {
     }
 
     public void print() {
+        for (int i = 0; i < functions.size() - 1; i++) {
+            functions.get(i).print();
+        }
+
         for (GlobalVar globalVar : globalVars) {
             globalVar.print();
         }
-        for (Function function : functions) {
-            function.print();
-        }
+
+        functions.get(functions.size() - 1).print();
+
+
     }
 }

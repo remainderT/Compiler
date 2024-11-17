@@ -21,7 +21,7 @@ public class Compiler {
         syntax.analyze();
         Semantic semantic = new Semantic(syntax.getCompUnit(), errors);
         semantic.fCompUnit();
-        LLVMGenerator generator = new LLVMGenerator(semantic);
+        LLVMGenerator generator = new LLVMGenerator(semantic.getCompUnit());
         generator.Generate();
         IRModule module = IRModule.getInstance();
         if (errors.isEmpty()) {

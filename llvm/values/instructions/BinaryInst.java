@@ -20,7 +20,7 @@ public class BinaryInst extends Instruction {
     }
 
     public void print() {
-        IO.dealLLVMGeneration("    " + super.getName() + " = " + super.getOperator().toString().toLowerCase() + " ");
+        IO.dealLLVMGeneration("    " + super.getName() + " = " + super.getOperator().toString().toLowerCase() + " nsw ");
         IO.dealLLVMGeneration(left.getType() + " ");
         IO.dealLLVMGeneration(left.getName() + ", ");
         IO.dealLLVMGeneration(right.getName() + "\n");
