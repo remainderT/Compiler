@@ -356,6 +356,11 @@ public class LLVMGenerator {
             gExp(exp);
             Value value = valueStack.pop();
             Value addr = getValue(lVal.getIdent().getContent());
+            if (value.getType() != addr.getType()) {
+                Instruction inst = ValueFactory.getConvInst(currentBlock, value);
+                currentBlock.addInstruction(inst);
+                value = inst;
+            }
             Instruction inst = ValueFactory.getStoreInst(value, addr);
             currentBlock.addInstruction(inst);
         } else if (stmt.getType() == Exp) {
@@ -408,18 +413,18 @@ public class LLVMGenerator {
             for (int i =1 ; i < format.length()-1; i++) {
                 List<Value> params = new ArrayList<>();
                 if (format.charAt(i) == '%' && (format.charAt(i+1) == 'c' || format.charAt(i+1) == 'd')) {
+                    gExp(stmt.getExps().get(paramIndex++));
+                    Value value = valueStack.pop();
+                    if (value.getType() == IntegerType.I8) {
+                        Instruction inst1 = ValueFactory.getConvInst(currentBlock, value);
+                        currentBlock.addInstruction(inst1);
+                        value = inst1;
+                    }
+                    params.add(value);
                     if (format.charAt(i+1) == 'd') {
-                        gExp(stmt.getExps().get(paramIndex++));
-                        Value value = valueStack.pop();
-                        params.add(value);
                         Instruction inst = ValueFactory.getCallInst(currentBlock, (Function) getValue("putint"), params);
                         currentBlock.addInstruction(inst);
                     } else if (format.charAt(i+1) == 'c') {
-                        gExp(stmt.getExps().get(paramIndex++));
-                        Value value = valueStack.pop();
-                        Instruction inst1 = ValueFactory.getConvInst(currentBlock, value);
-                        currentBlock.addInstruction(inst1);
-                        params.add(inst1);
                         Instruction inst = ValueFactory.getCallInst(currentBlock, (Function) getValue("putch"), params);
                         currentBlock.addInstruction(inst);
                     }
@@ -520,7 +525,8 @@ public class LLVMGenerator {
         } else if (primaryExp.getNumber() != null) {
             valueStack.add(ValueFactory.getIntConst(primaryExp.getNumber().getIntcon().getContent(), false));
         } else {
-            valueStack.add(ValueFactory.getIntConst(primaryExp.getCharacter().getChrcon().getContent(), true));
+            String number = primaryExp.getCharacter().getChrcon().getContent().substring(1);   // "'c'"
+            valueStack.add(ValueFactory.getIntConst(number, true));
         }
     }
 

@@ -4,6 +4,7 @@ import llvm.types.IntegerType;
 import llvm.types.Type;
 import llvm.values.Arguement;
 import llvm.values.BasicBlock;
+import llvm.values.Instruction;
 import llvm.values.Value;
 import llvm.values.constants.Function;
 import llvm.values.constants.GlobalVar;
@@ -66,6 +67,18 @@ public class ValueFactory {
 
     public static StoreInst getStoreInst(Value value, Value pointer) {
         return new StoreInst(value, pointer);
+    }
+
+    public static Value[] checkTypeConversion(BasicBlock basicBlock, Value left, Value right) {
+        if (left.getType() == IntegerType.I32 && right.getType() == IntegerType.I8) {
+            return new Value[]{left, getConvInst(basicBlock, right)};
+        } else if (left.getType() == IntegerType.I8 && right.getType() == IntegerType.I32) {
+            return new Value[]{getConvInst(basicBlock, left), right};
+        } else if (left.getType() == IntegerType.I8 && right.getType() == IntegerType.I8) {
+            return new Value[]{getConvInst(basicBlock, left), getConvInst(basicBlock, right)};
+        } else {
+            return new Value[]{left, right};
+        }
     }
 
 }
