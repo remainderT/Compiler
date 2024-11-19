@@ -2,6 +2,7 @@ package llvm.values.constants;
 
 import llvm.types.FunctionType;
 import llvm.types.Type;
+import llvm.types.VoidType;
 import llvm.values.Arguement;
 import llvm.values.BasicBlock;
 import llvm.values.Constant;
@@ -15,8 +16,6 @@ public class Function extends Constant {
     private boolean isLibrary;
 
     private List<BasicBlock> blocks;
-
-    private int regNum = 0;
 
     private List<Type> paramTypes;
 
@@ -58,18 +57,14 @@ public class Function extends Constant {
             IO.dealLLVMGeneration(" {\n");
             for (BasicBlock block : blocks) {
                 block.print();
+                IO.dealLLVMGeneration("\n");
+            }
+            if (getReturnType() == VoidType.Void && blocks.get(blocks.size() - 1).checkLastReturn()) {
+                IO.dealLLVMGeneration("    ret void\n");
             }
             IO.dealLLVMGeneration("}");
         }
         IO.dealLLVMGeneration("\n\n");
-    }
-
-    public int getRegNum() {
-        return regNum;
-    }
-
-    public void setRegNum(int regNum) {
-        this.regNum = regNum;
     }
 
     public Type getReturnType() {

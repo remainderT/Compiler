@@ -1,6 +1,7 @@
 package llvm.values;
 
 import llvm.types.LabelType;
+import llvm.values.instructions.Operator;
 import util.IO;
 
 import java.util.ArrayList;
@@ -11,9 +12,9 @@ public class BasicBlock extends Value {
 
     private int regNum = 0;
 
-    public BasicBlock(String name, int regNum) {
-        super(name, new LabelType(regNum++));
-        this.regNum = regNum;
+    public BasicBlock(String name) {
+        super(name, new LabelType(0));
+        regNum = 1;
     }
 
     public void print() {
@@ -29,6 +30,27 @@ public class BasicBlock extends Value {
 
     public int getRegNumAndPlus() {
         return regNum++;
+    }
+
+    public int getRegNum() {
+        return regNum;
+    }
+
+    public void setLabelRegNum(int regNum) {
+        ((LabelType) getType()).setRegNum(regNum);
+        this.regNum = regNum + 1;
+    }
+
+    public int getLabelRegNum() {
+        return ((LabelType) getType()).getRegNum();
+    }
+
+    public Boolean checkLastReturn() {
+        if (instructions.isEmpty()) {
+            return true;
+        }
+        Instruction lastInstruction = instructions.get(instructions.size() - 1);
+        return lastInstruction.getOperator() != Operator.Ret;
     }
 
 }

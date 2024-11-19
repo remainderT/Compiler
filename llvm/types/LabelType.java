@@ -10,6 +10,15 @@ public class LabelType implements Type {
 
     @Override
     public String toString() {
-        return "label_" + regNum;
+        return ";<label>:" + regNum;
     }
+
+    public void setRegNum(int regNum) {
+        this.regNum = regNum;
+    }
+
+    public int getRegNum() {
+        return regNum;
+    }
+
 }

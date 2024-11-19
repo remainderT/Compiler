@@ -4,7 +4,6 @@ import common.TokenType;
 import frontend.Token;
 import llvm.types.FunctionType;
 import llvm.types.IntegerType;
-import llvm.types.PointerType;
 import llvm.types.Type;
 import llvm.types.VoidType;
 import llvm.values.Arguement;
@@ -15,25 +14,29 @@ import llvm.values.constants.Function;
 import llvm.values.constants.GlobalVar;
 import llvm.values.instructions.AllocaInst;
 import llvm.values.instructions.Operator;
-import llvm.values.instructions.StoreInst;
 import syntaxNode.AddExp;
 import syntaxNode.Block;
 import syntaxNode.BlockItem;
 import syntaxNode.CompUnit;
+import syntaxNode.Cond;
 import syntaxNode.ConstDecl;
 import syntaxNode.ConstDef;
 import syntaxNode.ConstExp;
 import syntaxNode.ConstInitVal;
 import syntaxNode.Decl;
+import syntaxNode.EqExp;
 import syntaxNode.Exp;
 import syntaxNode.FuncDef;
 import syntaxNode.FuncFParam;
 import syntaxNode.FuncFParams;
 import syntaxNode.InitVal;
+import syntaxNode.LAndExp;
+import syntaxNode.LOrExp;
 import syntaxNode.LVal;
 import syntaxNode.MainFuncDef;
 import syntaxNode.MulExp;
 import syntaxNode.PrimaryExp;
+import syntaxNode.RelExp;
 import syntaxNode.Stmt;
 import syntaxNode.UnaryExp;
 import syntaxNode.VarDecl;
@@ -72,6 +75,10 @@ public class LLVMGenerator {
 
     private BasicBlock currentBlock;
 
+    private BasicBlock ifTrueBlock;
+
+    private BasicBlock ifFalseBlock;
+
     private Function currentFunction;
 
     private Boolean isGlobal;
@@ -100,17 +107,14 @@ public class LLVMGenerator {
         Function getChar = new Function("getchar", new FunctionType(IntegerType.I32, new ArrayList<>()), true);
         Function putInt = new Function("putint", new FunctionType(VoidType.Void, List.of(IntegerType.I32)), true);
         Function putCh = new Function("putch", new FunctionType(VoidType.Void, List.of(IntegerType.I32)), true);
-        Function putStr = new Function("putstr", new FunctionType(VoidType.Void, List.of(new PointerType(IntegerType.I8))), true);
         irModule.addFunction(getInt);
         irModule.addFunction(getChar);
         irModule.addFunction(putInt);
         irModule.addFunction(putCh);
-        irModule.addFunction(putStr);
         currentSymbolTable.put("getint", getInt);
         currentSymbolTable.put("getchar", getChar);
         currentSymbolTable.put("putint", putInt);
         currentSymbolTable.put("putch", putCh);
-        currentSymbolTable.put("putstr", putStr);
 
     }
 
@@ -155,26 +159,22 @@ public class LLVMGenerator {
         String name = constDef.getIdent().getContent();
         if (constDef.getDimension() == 0) {
             gConstInitVal(constDef.getConstInitVal());
+            Value value = !valueStack.empty() ? valueStack.pop() : null;
             if (isGlobal) {
-                Value value = !valueStack.empty() ? valueStack.pop() : null;
                 if (value != null) {
                     value.setType(currentType);
                 }
-                GlobalVar globalVar = ValueFactory.getGlobalVar(name, currentType, isConst, value);
+                GlobalVar globalVar = ValueFactory.buildGlobalVar(name, currentType, isConst, value);
                 irModule.addGlobalVar(globalVar);
                 currentSymbolTable.put(name, globalVar);
             } else {
-                Value value = !valueStack.empty() ? valueStack.pop() : null;
-                Instruction inst1 = ValueFactory.getAllocaInst(currentBlock, isConst, currentType);
-                currentBlock.addInstruction(inst1);
+                Instruction inst = ValueFactory.buildAllocaInst(currentBlock, isConst, currentType);
+                currentSymbolTable.put(name, inst);
                 if (value != null) {
                     if (currentType != value.getType()) {
-                        Instruction inst3 = ValueFactory.getConvInst(currentBlock, value);
-                        currentBlock.addInstruction(inst3);
-                        value = inst3;
+                        value = ValueFactory.buildConvInst(currentBlock, value);
                     }
-                    Instruction inst2 = ValueFactory.getStoreInst(value, inst1);
-                    currentBlock.addInstruction(inst2);
+                    ValueFactory.buildStoreInst(currentBlock, value, inst);
                 }
             }
         }
@@ -215,24 +215,19 @@ public class LLVMGenerator {
                     value = valueStack.pop();
                     value.setType(currentType);
                 }
-                GlobalVar globalVar = ValueFactory.getGlobalVar(name, currentType, isConst, value);
+                GlobalVar globalVar = ValueFactory.buildGlobalVar(name, currentType, isConst, value);
                 irModule.addGlobalVar(globalVar);
                 currentSymbolTable.put(name, globalVar);
             } else {
-                Instruction inst1 = ValueFactory.getAllocaInst(currentBlock, isConst, currentType);
-                currentBlock.addInstruction(inst1);
-                currentSymbolTable.put(name, inst1);
-                Value value = null;
+                Instruction inst = ValueFactory.buildAllocaInst(currentBlock, isConst, currentType);
+                currentSymbolTable.put(name, inst);
                 if (varDef.getInitVal() != null) {
                     gInitVal(varDef.getInitVal());
-                    value =  valueStack.pop();
+                    Value value =  valueStack.pop();
                     if (currentType != value.getType()) {
-                        Instruction inst3 = ValueFactory.getConvInst(currentBlock, value);
-                        currentBlock.addInstruction(inst3);
-                        value = inst3;
+                        value = ValueFactory.buildConvInst(currentBlock, value);
                     }
-                    Instruction inst2 = ValueFactory.getStoreInst(value, inst1);
-                    currentBlock.addInstruction(inst2);
+                    ValueFactory.buildStoreInst(currentBlock, value, inst);
                 }
             }
         }
@@ -264,21 +259,20 @@ public class LLVMGenerator {
 
         currentFunction = new Function(funcDef.getIdent().getContent(), functionType, false);
         irModule.addFunction(currentFunction);
-        symbolTables.get(0).put(funcDef.getIdent().getContent(), currentFunction);
+        symbolTables.getFirst().put(funcDef.getIdent().getContent(), currentFunction);
 
-        currentBlock = new BasicBlock("block", args.size());
+        currentBlock = ValueFactory.buildBasicBlock("block");
+        currentFunction.addBlock(currentBlock);
+        currentBlock.setLabelRegNum(args.size());
         for (int i= 0; i < args.size(); i++) {
             Arguement arguement = args.get(i);
             String name = funcDef.getFuncFParams().getFuncFParams().get(i).getIdent().getContent();
-            AllocaInst inst1 = ValueFactory.getAllocaInst(currentBlock, false, arguement.getType());
-            StoreInst inst2 = ValueFactory.getStoreInst(arguement, inst1);
-            currentBlock.addInstruction(inst1);
-            currentBlock.addInstruction(inst2);
-            currentSymbolTable.put(name, inst1);
+            AllocaInst inst = ValueFactory.buildAllocaInst(currentBlock, false, arguement.getType());
+            ValueFactory.buildStoreInst(currentBlock, arguement, inst);
+            currentSymbolTable.put(name, inst);
         }
 
         gBlock(funcDef.getBlock());
-        currentFunction.addBlock(currentBlock);
 
         currentSymbolTable = currentSymbolTable.getFather();
     }
@@ -298,7 +292,7 @@ public class LLVMGenerator {
         // FuncFParam → BType Ident ['[' ']']
         Type type = funcFParam.getBType().getToken().getType() == TokenType.INTTK ? IntegerType.I32 : IntegerType.I8;
         paramTypes.add(type);
-        Arguement arguement = ValueFactory.getArguement(type, index);
+        Arguement arguement = ValueFactory.buildArguement(type, index);
         args.add(arguement);
         currentSymbolTable.put(funcFParam.getIdent().getContent(), arguement);
     }
@@ -311,11 +305,11 @@ public class LLVMGenerator {
 
         currentFunction = new Function("main", new FunctionType(IntegerType.I32, new ArrayList<>()), false);
         irModule.addFunction(currentFunction);
-        symbolTables.get(0).put("main", currentFunction);
+        symbolTables.getFirst().put("main", currentFunction);
 
-        currentBlock = new BasicBlock("block", currentFunction.getRegNum());
-        gBlock(mainFuncDef.getBlock());
+        currentBlock = ValueFactory.buildBasicBlock("mainBlock");
         currentFunction.addBlock(currentBlock);
+        gBlock(mainFuncDef.getBlock());
 
         currentSymbolTable = currentSymbolTable.getFather();
     }
@@ -352,30 +346,27 @@ public class LLVMGenerator {
 */
         if (stmt.getType() == LValAssignExp ) {
             LVal lVal = stmt.getLVal();
-            Exp exp = stmt.getExps().get(0);
+            Exp exp = stmt.getExps().getFirst();
             gExp(exp);
             Value value = valueStack.pop();
             Value addr = getValue(lVal.getIdent().getContent());
             if (value.getType() != addr.getType()) {
-                Instruction inst = ValueFactory.getConvInst(currentBlock, value);
-                currentBlock.addInstruction(inst);
-                value = inst;
+                value = ValueFactory.buildConvInst(currentBlock, value);
             }
-            Instruction inst = ValueFactory.getStoreInst(value, addr);
-            currentBlock.addInstruction(inst);
+            ValueFactory.buildStoreInst(currentBlock, value, addr);
         } else if (stmt.getType() == Exp) {
             if (!stmt.getExps().isEmpty()) {
-                gExp(stmt.getExps().get(0));
+                gExp(stmt.getExps().getFirst());
                 valueStack.pop();
             }
         } else if (stmt.getType() == Return) {
             Value value = null;
             if (!stmt.getExps().isEmpty()) {
-                gExp(stmt.getExps().get(0));
+                valueStack.clear();
+                gExp(stmt.getExps().getFirst());
                 value = valueStack.pop();
             }
-            Instruction inst = ValueFactory.getRetInst(value);
-            currentBlock.addInstruction(inst);
+            ValueFactory.buildRetInst(currentBlock, value);
         } else if (stmt.getType() == Block) {
             LLVMSymbolTable next = new LLVMSymbolTable(index++, currentSymbolTable);
             symbolTables.add(next);
@@ -385,7 +376,42 @@ public class LLVMGenerator {
 
             currentSymbolTable = currentSymbolTable.getFather();
         } else if (stmt.getType() == If) {
+            BasicBlock condBlock = ValueFactory.buildBasicBlock("ifCond");
+            ValueFactory.buildBrInst(currentBlock, condBlock);
 
+            ifTrueBlock = ValueFactory.buildBasicBlock("ifTrue");
+            BasicBlock recordIfTureBlock = ifTrueBlock;
+            ifFalseBlock = ValueFactory.buildBasicBlock("ifFalse");
+            BasicBlock recordIfFalseBlock = ifFalseBlock;
+
+            condBlock.setLabelRegNum(currentBlock.getRegNum());
+            currentFunction.addBlock(condBlock);
+            currentBlock = condBlock;
+            gCond(stmt.getCond());
+
+            recordIfTureBlock.setLabelRegNum(currentBlock.getRegNum());
+            currentFunction.addBlock(recordIfTureBlock);
+            currentBlock = recordIfTureBlock;
+            gStmt(stmt.getStmt());
+
+            if (stmt.getStmtElse() != null) {
+                BasicBlock afterIfBlock = ValueFactory.buildBasicBlock("afterIf");
+                ValueFactory.buildBrInst(currentBlock, afterIfBlock);
+                recordIfFalseBlock.setLabelRegNum(currentBlock.getRegNum());
+                currentBlock = recordIfFalseBlock;
+                currentFunction.addBlock(recordIfFalseBlock);
+                gStmt(stmt.getStmtElse());
+
+                ValueFactory.buildBrInst(currentBlock, afterIfBlock);
+                afterIfBlock.setLabelRegNum(currentBlock.getRegNum());
+                currentFunction.addBlock(afterIfBlock);
+                currentBlock = afterIfBlock;
+            } else {
+                ValueFactory.buildBrInst(currentBlock, recordIfFalseBlock);
+                recordIfFalseBlock.setLabelRegNum(currentBlock.getRegNum());
+                currentFunction.addBlock(recordIfFalseBlock);
+                currentBlock = recordIfFalseBlock;
+            }
         } else if (stmt.getType() == For) {
 
         } else if (stmt.getType() == Break || stmt.getType() == Continue) {
@@ -393,19 +419,14 @@ public class LLVMGenerator {
         } else if (stmt.getType() == LValAssignGetint) {
             LVal lVal = stmt.getLVal();
             Value addr = getValue(lVal.getIdent().getContent());
-            Instruction inst1 = ValueFactory.getCallInst(currentBlock, (Function) getValue("getint"),new ArrayList<>());
-            currentBlock.addInstruction(inst1);
-            Instruction inst2 = ValueFactory.getStoreInst(inst1, addr);
-            currentBlock.addInstruction(inst2);
+            Instruction inst = ValueFactory.buildCallInst(currentBlock, (Function) getValue("getint"),new ArrayList<>());
+            ValueFactory.buildStoreInst(currentBlock, inst, addr);
         } else if (stmt.getType() == LValAssignGetchar) {
             LVal lVal = stmt.getLVal();
             Value addr = getValue(lVal.getIdent().getContent());
-            Instruction inst1 = ValueFactory.getCallInst(currentBlock, (Function) getValue("getchar"),new ArrayList<>());
-            currentBlock.addInstruction(inst1);
-            Instruction inst2 = ValueFactory.getConvInst(currentBlock, inst1);
-            currentBlock.addInstruction(inst2);
-            Instruction inst3 = ValueFactory.getStoreInst(inst2, addr);
-            currentBlock.addInstruction(inst3);
+            Instruction inst1 = ValueFactory.buildCallInst(currentBlock, (Function) getValue("getchar"),new ArrayList<>());
+            Instruction inst2 = ValueFactory.buildConvInst(currentBlock, inst1);
+            ValueFactory.buildStoreInst(currentBlock, inst2, addr);
         } else if (stmt.getType() == Printf) {
             String format = stmt.getStrcon().getContent();
             format = format.replace("\\n","\n");
@@ -416,24 +437,21 @@ public class LLVMGenerator {
                     gExp(stmt.getExps().get(paramIndex++));
                     Value value = valueStack.pop();
                     if (value.getType() == IntegerType.I8) {
-                        Instruction inst1 = ValueFactory.getConvInst(currentBlock, value);
+                        Instruction inst1 = ValueFactory.buildConvInst(currentBlock, value);
                         currentBlock.addInstruction(inst1);
                         value = inst1;
                     }
                     params.add(value);
                     if (format.charAt(i+1) == 'd') {
-                        Instruction inst = ValueFactory.getCallInst(currentBlock, (Function) getValue("putint"), params);
-                        currentBlock.addInstruction(inst);
+                        ValueFactory.buildCallInst(currentBlock, (Function) getValue("putint"), params);
                     } else if (format.charAt(i+1) == 'c') {
-                        Instruction inst = ValueFactory.getCallInst(currentBlock, (Function) getValue("putch"), params);
-                        currentBlock.addInstruction(inst);
+                        ValueFactory.buildCallInst(currentBlock, (Function) getValue("putch"), params);
                     }
                     i++;
                 } else {
-                    Value value = ValueFactory.getIntConst(String.valueOf(format.charAt(i)), true);
+                    Value value = ValueFactory.buildIntConst(String.valueOf(format.charAt(i)), true);
                     params.add(value);
-                    Instruction inst = ValueFactory.getCallInst(currentBlock, (Function) getValue("putch"), params);
-                    currentBlock.addInstruction(inst);
+                    ValueFactory.buildCallInst(currentBlock, (Function) getValue("putch"), params);
                 }
             }
         }
@@ -444,47 +462,44 @@ public class LLVMGenerator {
         gAddExp(exp.getAddExp());
     }
 
+
     public void gAddExp(AddExp addExp) {
         // AddExp → MulExp | AddExp ('+' | '−') MulExp
-        for (int i = 0; i < addExp.getMulExps().size(); i++) {
-            gMulExp(addExp.getMulExps().get(i));
-            if (valueStack.size() >= 2) {
-                Value right = valueStack.pop();
-                Value left = valueStack.pop();
-                if (isConst) {
-                    int num1 = Integer.parseInt(left.getName());
-                    int num2 = Integer.parseInt(right.getName());
-                    int result = calculate(addExp.getOperations().get(i-1), num1, num2);
-                    valueStack.add(ValueFactory.getIntConst(String.valueOf(result), false));
-                } else {
-                    Operator op = addExp.getOperations().get(i-1).getType() == TokenType.PLUS ? Operator.Add : Operator.Sub;
-                    Instruction inst = ValueFactory.getBinaryInst(currentBlock, op, left, right);
-                    currentBlock.addInstruction(inst);
-                    valueStack.add(inst);
-                }
+        gMulExp(addExp.getMulExps().getFirst());
+        for (int i = 0; i < addExp.getOperations().size(); i++) {
+            gMulExp(addExp.getMulExps().get(i+1));
+            Value right = valueStack.pop();
+            Value left = valueStack.pop();
+            if (isConst) {
+                int num1 = Integer.parseInt(left.getName());
+                int num2 = Integer.parseInt(right.getName());
+                int result = calculate(addExp.getOperations().get(i), num1, num2);
+                valueStack.add(ValueFactory.buildIntConst(String.valueOf(result), false));
+            } else {
+                Operator op = addExp.getOperations().get(i).getType() == TokenType.PLUS ? Operator.Add : Operator.Sub;
+                Instruction inst = ValueFactory.buildBinaryInst(currentBlock, op, left, right);
+                valueStack.add(inst);
             }
         }
     }
 
     public void gMulExp(MulExp mulExp) {
         // MulExp → UnaryExp | MulExp ('*' | '/' | '%') UnaryExp
-        for (int i = 0; i < mulExp.getUnaryExps().size(); i++) {
-            gUnaryExp(mulExp.getUnaryExps().get(i));
-            if (valueStack.size() >= 2 && i > 0) {
-                Value right = valueStack.pop();
-                Value left = valueStack.pop();
-                if (isConst) {
-                    int num1 = Integer.parseInt(left.getName());
-                    int num2 = Integer.parseInt(right.getName());
-                    int result = calculate(mulExp.getOperators().get(i-1), num1, num2);
-                    valueStack.add(ValueFactory.getIntConst(String.valueOf(result), false));
-                } else {
-                    Operator op = mulExp.getOperators().get(i - 1).getType() == TokenType.MULT ? Operator.Mul :
-                            mulExp.getOperators().get(i - 1).getType() == TokenType.DIV ? Operator.Sdiv : Operator.Srem;
-                    Instruction inst = ValueFactory.getBinaryInst(currentBlock, op, left, right);
-                    currentBlock.addInstruction(inst);
-                    valueStack.add(inst);
-                }
+        gUnaryExp(mulExp.getUnaryExps().getFirst());
+        for (int i = 0; i < mulExp.getOperators().size(); i++) {
+            gUnaryExp(mulExp.getUnaryExps().get(i+1));
+            Value right = valueStack.pop();
+            Value left = valueStack.pop();
+            if (isConst) {
+                int num1 = Integer.parseInt(left.getName());
+                int num2 = Integer.parseInt(right.getName());
+                int result = calculate(mulExp.getOperators().get(i), num1, num2);
+                valueStack.add(ValueFactory.buildIntConst(String.valueOf(result), false));
+            } else {
+                Operator op = mulExp.getOperators().get(i).getType() == TokenType.MULT ? Operator.Mul :
+                        mulExp.getOperators().get(i).getType() == TokenType.DIV ? Operator.Sdiv : Operator.Srem;
+                Instruction inst = ValueFactory.buildBinaryInst(currentBlock, op, left, right);
+                valueStack.add(inst);
             }
         }
     }
@@ -502,16 +517,16 @@ public class LLVMGenerator {
                 Value value = valueStack.pop();
                 params.add(value);
             }
-            Instruction inst = ValueFactory.getCallInst(currentBlock, function, params);
-            valueStack.add(inst);
-            currentBlock.addInstruction(inst);
+            Instruction inst = ValueFactory.buildCallInst(currentBlock, function, params);
+            if (function.getType() != VoidType.Void) {
+                valueStack.add(inst);
+            }
         } else {
             Operator op = unaryExp.getUnaryOp().getToken().getType() == TokenType.PLUS ? Operator.Add : Operator.Sub;
-            Value left = ValueFactory.getIntConst("0", false);
+            Value left = ValueFactory.buildIntConst("0", false);
             gUnaryExp(unaryExp.getUnaryExp());
             Value right = valueStack.pop();
-            Instruction inst = ValueFactory.getBinaryInst(currentBlock, op, left, right);
-            currentBlock.addInstruction(inst);
+            Instruction inst = ValueFactory.buildBinaryInst(currentBlock, op, left, right);
             valueStack.add(inst);
         }
     }
@@ -523,36 +538,101 @@ public class LLVMGenerator {
         } else if (primaryExp.getLVal() != null) {
             gLVal(primaryExp.getLVal());
         } else if (primaryExp.getNumber() != null) {
-            valueStack.add(ValueFactory.getIntConst(primaryExp.getNumber().getIntcon().getContent(), false));
+            valueStack.add(ValueFactory.buildIntConst(primaryExp.getNumber().getIntcon().getContent(), false));
         } else {
             String number = primaryExp.getCharacter().getChrcon().getContent().substring(1);   // "'c'"
-            valueStack.add(ValueFactory.getIntConst(number, true));
+            valueStack.add(ValueFactory.buildIntConst(number, true));
         }
     }
 
-    public void gCond() {
+    public void gCond(Cond cond) {
         // Cond → LOrExp
+        gLOrExp(cond.getLOrExp());
     }
 
-    public void gLAndExp() {
+    public void gLOrExp(LOrExp lOrExp) {
+        // LOrExp → LAndExp | LOrExp '||' LAndExp
+        BasicBlock wholeFalseBlock = ifFalseBlock;
+        for (int i = 0; i < lOrExp.getLAndExps().size(); i++) {
+            BasicBlock leftFalseBlock = ifFalseBlock;
+            if (i != lOrExp.getLAndExps().size() - 1) {
+                leftFalseBlock = ValueFactory.buildBasicBlock("ifFalse");
+                ifFalseBlock = leftFalseBlock;
+            }
+            gLAndExp(lOrExp.getLAndExps().get(i));
+            ifFalseBlock = wholeFalseBlock;
+            if (i != lOrExp.getLAndExps().size() - 1) {
+                leftFalseBlock.setLabelRegNum(currentBlock.getRegNum());
+                currentFunction.addBlock(leftFalseBlock);
+                currentBlock = leftFalseBlock;
+            }
+        }
+
+    }
+
+    public void gLAndExp(LAndExp lAndExp) {
         // LAndExp → EqExp | LAndExp '&&' EqExp
+        BasicBlock wholeTureBlock = ifTrueBlock;
+        for (int i = 0; i < lAndExp.getEqExps().size(); i++) {
+            BasicBlock leftTrueBlock = ifTrueBlock;
+            if (i != lAndExp.getEqExps().size() - 1) {
+                leftTrueBlock = ValueFactory.buildBasicBlock("ifTrue");
+                ifTrueBlock = leftTrueBlock;
+            }
+            valueStack.clear();
+            gEqExp(lAndExp.getEqExps().get(i));
+            Value value = valueStack.pop();
+            ValueFactory.buildBrInst(currentBlock, leftTrueBlock, ifFalseBlock, value);
+            ifTrueBlock = wholeTureBlock;
+            if (i != lAndExp.getEqExps().size() - 1) {
+                leftTrueBlock.setLabelRegNum(currentBlock.getRegNum());
+                currentFunction.addBlock(leftTrueBlock);
+                currentBlock = leftTrueBlock;
+            }
+        }
     }
 
-    public void gEqExp() {
+    public void gEqExp(EqExp eqExp) {
         // EqExp → RelExp | EqExp ('==' | '!=') RelExp
+        gRelExp(eqExp.getRelExps().getFirst());
+        for (int i=0; i < eqExp.getTokens().size(); i++) {
+            gRelExp(eqExp.getRelExps().get(i+1));
+            Value right = valueStack.pop();
+            Value left = valueStack.pop();
+            Operator op = eqExp.getTokens().get(i).getType() == TokenType.EQL ? Operator.Eq : Operator.Ne;
+            Instruction inst = ValueFactory.buildBinaryInst(currentBlock, op, left, right);
+            valueStack.add(inst);
+        }
     }
 
-    public void gRelExp() {
+    public void gRelExp(RelExp relExp) {
         // RelExp → AddExp | RelExp ('<' | '>' | '<=' | '>=') AddExp
+        gAddExp(relExp.getAddExps().getFirst());
+        for (int i=0; i < relExp.getTokens().size(); i++) {
+            gAddExp(relExp.getAddExps().get(i+1));
+            Value right = valueStack.pop();
+            Value left = valueStack.pop();
+            Operator op = null;
+            if (relExp.getTokens().get(i).getType() == TokenType.LSS) {
+                op = Operator.Slt;
+            } else if (relExp.getTokens().get(i).getType() == TokenType.LEQ) {
+                op = Operator.Sle;
+            } else if (relExp.getTokens().get(i).getType() == TokenType.GRE) {
+                op = Operator.Sgt;
+            } else if (relExp.getTokens().get(i).getType() == TokenType.GEQ) {
+                op = Operator.Sge;
+            }
+            Instruction inst = ValueFactory.buildBinaryInst(currentBlock, op, left, right);
+            valueStack.add(inst);
+        }
     }
 
     public void gLVal(LVal lVal) {
         // LVal → Ident ['[' Exp ']']
         if (lVal.getDimension() == 0) {
             Value value = getValue(lVal.getIdent().getContent());
-            Instruction inst = ValueFactory.getLoadInst(currentBlock, value);
+            Instruction inst = ValueFactory.buildLoadInst(currentBlock, value);
             valueStack.add(inst);
-            currentBlock.addInstruction(inst);
         } else {
             // Array
         }

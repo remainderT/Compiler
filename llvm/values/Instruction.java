@@ -2,7 +2,7 @@ package llvm.values;
 
 import llvm.values.instructions.Operator;
 
-public class Instruction extends User {
+public class Instruction extends Value {
 
     private Operator operator;
 
