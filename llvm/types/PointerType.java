@@ -8,7 +8,7 @@ public class PointerType implements Type {
         this.pointTo = pointTo;
     }
 
-    public Type getpointTo() {
+    public Type getPointTo() {
         return pointTo;
     }
 

@@ -39,4 +39,5 @@ public class BrInst extends Instruction {
             IO.dealLLVMGeneration(" " + condition.getName() + " ,label %" + trueBlock.getLabelRegNum() + " ,label %" + falseBlock.getLabelRegNum() + "\n");
         }
     }
+
 }

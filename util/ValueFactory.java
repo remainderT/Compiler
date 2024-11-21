@@ -6,6 +6,7 @@ import llvm.values.Arguement;
 import llvm.values.BasicBlock;
 import llvm.values.Value;
 import llvm.values.constants.Function;
+import llvm.values.constants.GlobalArray;
 import llvm.values.constants.GlobalVar;
 import llvm.values.constants.IntConst;
 import llvm.values.instructions.AllocaInst;
@@ -13,6 +14,7 @@ import llvm.values.instructions.BinaryInst;
 import llvm.values.instructions.BrInst;
 import llvm.values.instructions.CallInst;
 import llvm.values.instructions.ConvInst;
+import llvm.values.instructions.GepInst;
 import llvm.values.instructions.LoadInst;
 import llvm.values.instructions.Operator;
 import llvm.values.instructions.RetInst;
@@ -26,16 +28,20 @@ public class ValueFactory {
         return new BasicBlock(name);
     }
 
-    public static IntConst buildIntConst(String number, Boolean isChar) {
+    public static IntConst buildIntConst(int value, Boolean isChar) {
         if (isChar) {
-            return new IntConst(number.charAt(0), IntegerType.I8);
+            return new IntConst(value, IntegerType.I8);
         } else {
-            return new IntConst(Integer.parseInt(number), IntegerType.I32);
+            return new IntConst(value, IntegerType.I32);
         }
     }
 
     public static GlobalVar buildGlobalVar(String name, Type type, boolean isConst, Value value) {
         return new GlobalVar(name, type, isConst, value);
+    }
+
+    public static GlobalArray buildGlobalArray(String name, Boolean isConst, int capacity, Type elememtType) {
+        return new GlobalArray(name, isConst, capacity, elememtType);
     }
 
     public static Arguement buildArguement(Type type, int index) {
@@ -74,15 +80,21 @@ public class ValueFactory {
         return inst;
     }
 
-    public static AllocaInst buildAllocaInst(BasicBlock basicBlock, boolean isConst, Type allocaType) {
-        AllocaInst inst = new AllocaInst(basicBlock, isConst, allocaType);
+    public static AllocaInst buildAllocaInst(BasicBlock basicBlock, Type allocaType) {
+        AllocaInst inst = new AllocaInst(basicBlock, allocaType);
         basicBlock.addInstruction(inst);
         return inst;
     }
 
-    public static void buildStoreInst(BasicBlock basicBlock, Value value, Value pointer) {
-        StoreInst inst = new StoreInst(value, pointer);
+    public static void buildStoreInst(BasicBlock basicBlock, Value value, Value addr) {
+        StoreInst inst = new StoreInst(value, addr);
         basicBlock.addInstruction(inst);
+    }
+
+    public static GepInst buildGepInst(BasicBlock basicBlock, Value array, Value offset) {
+        GepInst inst = new GepInst(basicBlock, array, offset);
+        basicBlock.addInstruction(inst);
+        return inst;
     }
 
     public static Value[] checkTypeConversion(BasicBlock basicBlock, Value left, Value right) {

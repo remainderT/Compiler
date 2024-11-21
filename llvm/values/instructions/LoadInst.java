@@ -17,7 +17,11 @@ public class LoadInst extends Instruction {
         super(Operator.Load);
         this.value = value;
         setName("%" + basicBlock.getRegNumAndPlus());
-        setType(value.getType());
+        if (value.getType() instanceof PointerType) {
+            setType(((PointerType) value.getType()).getPointTo());
+        } else {
+            setType(value.getType());
+        }
         addr = new PointerType(value.getType());
     }
 

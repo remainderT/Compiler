@@ -7,15 +7,12 @@ import util.IO;
 
 public class AllocaInst extends Instruction {
 
-    private boolean isConst;
-
     private Type type;
 
-    public AllocaInst(BasicBlock basicBlock, boolean isConst, Type allocaType) {
+    public AllocaInst(BasicBlock basicBlock, Type allocaType) {
         super(Operator.Alloca);
         super.setType(allocaType);
         setName("%" + basicBlock.getRegNumAndPlus());
-        this.isConst = isConst;
         this.type = allocaType;
 
     }

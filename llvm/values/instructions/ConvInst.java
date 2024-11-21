@@ -31,4 +31,5 @@ public class ConvInst extends Instruction {
         IO.dealLLVMGeneration(from.toString() + " " + value.getName() + " to " + to.toString());
         IO.dealLLVMGeneration("\n");
     }
+
 }

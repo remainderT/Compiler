@@ -18,4 +18,13 @@ public class Instruction extends Value {
     public void print() {
 
     }
+
+    public Boolean isTerminator() {
+        return operator == Operator.Ret || operator == Operator.Br;
+    }
+
+    public Boolean costReg() {
+        return !getName().isEmpty();
+    }
+
 }

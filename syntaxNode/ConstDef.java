@@ -38,6 +38,10 @@ public class ConstDef implements BasciNode {
         return constInitVal;
     }
 
+    public ConstExp getConstExp() {
+        return constExp;
+    }
+
     @Override
     public void print() {
         IO.dealSyntax(ident.toString());

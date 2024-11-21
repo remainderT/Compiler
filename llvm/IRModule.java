@@ -1,7 +1,7 @@
 package llvm;
 
+import llvm.values.Constant;
 import llvm.values.constants.Function;
-import llvm.values.constants.GlobalVar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,17 +14,17 @@ public class IRModule {
         return irModule;
     }
 
-    private List<GlobalVar> globalVars;
+    private List<Constant> globalValues;
 
     private List<Function> functions;
 
     public IRModule() {
-        this.globalVars = new ArrayList<>();
+        this.globalValues = new ArrayList<>();
         this.functions = new ArrayList<>();
     }
 
-    public void addGlobalVar(GlobalVar globalVar) {
-        globalVars.add(globalVar);
+    public void addGlobalValue(Constant globalValue) {
+        globalValues.add(globalValue);
     }
 
     public void addFunction(Function function) {
@@ -36,10 +36,11 @@ public class IRModule {
             functions.get(i).print();
         }
 
-        for (GlobalVar globalVar : globalVars) {
-            globalVar.print();
+        for (int i = 0; i < globalValues.size(); i++) {
+            globalValues.get(i).print();
         }
 
         functions.get(functions.size() - 1).print();
     }
+
 }

@@ -37,6 +37,10 @@ public class ConstInitVal implements BasciNode {
         return constExps;
     }
 
+    public Token getStringConst() {
+        return strcon;
+    }
+
     @Override
     public void print() {
         if (strcon != null) {

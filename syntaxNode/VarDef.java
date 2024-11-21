@@ -38,6 +38,10 @@ public class VarDef implements BasciNode {
         return initVal;
     }
 
+    public ConstExp getConstExp() {
+        return constExp;
+    }
+
     @Override
     public void print() {
         IO.dealSyntax(ident.toString());

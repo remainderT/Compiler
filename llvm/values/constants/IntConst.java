@@ -12,6 +12,10 @@ public class IntConst extends Constant {
         this.value = value;
     }
 
+    public int getValue() {
+        return value;
+    }
+
     public void print() {
         System.out.print(value);
     }

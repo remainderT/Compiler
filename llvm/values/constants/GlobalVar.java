@@ -20,14 +20,25 @@ public class GlobalVar extends Constant {
         }
     }
 
+    public String getName() {
+        return "@" + super.getName();
+    }
+
+    public int getVal() {
+        return ((IntConst) value).getValue();
+    }
+
+    @Override
     public void print() {
-        IO.dealLLVMGeneration(this.getName() +  " = dso_local global ");
+        if (isConst) {
+            IO.dealLLVMGeneration("@" + super.getName() + " = dso_local constant ");
+        } else {
+            IO.dealLLVMGeneration("@" + super.getName() + " = dso_local global ");
+        }
         IO.dealLLVMGeneration(value.getType().toString() + " " + value.getName());
         IO.dealLLVMGeneration("\n\n");
     }
 
-    public String getName() {
-        return "@" + super.getName();
-    }
+
 
 }

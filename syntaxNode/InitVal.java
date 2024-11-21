@@ -37,6 +37,10 @@ public class InitVal implements BasciNode {
         return exps;
     }
 
+    public Token getStringConst() {
+        return stringConst;
+    }
+
     @Override
     public void print() {
         if (stringConst != null) {

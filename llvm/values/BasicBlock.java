@@ -25,7 +25,11 @@ public class BasicBlock extends Value {
     }
 
     public void addInstruction(Instruction instruction) {
-        instructions.add(instruction);
+        if (instructions.isEmpty() || !instructions.get(instructions.size() - 1).isTerminator()) {
+            instructions.add(instruction);
+        } else if (instruction.costReg()){
+            regNum--;
+        }
     }
 
     public int getRegNumAndPlus() {

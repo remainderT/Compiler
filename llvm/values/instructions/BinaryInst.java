@@ -16,16 +16,10 @@ public class BinaryInst extends Instruction {
     public BinaryInst(BasicBlock basicBlock, Operator operator, Value left, Value right) {
         super(operator);
         Value[] values = ValueFactory.checkTypeConversion(basicBlock, left, right);
-        if (values[0] != left) {
-            basicBlock.addInstruction((Instruction) values[0]);
-        }
-        if (values[1] != right) {
-            basicBlock.addInstruction((Instruction) values[1]);
-        }
         this.left = values[0];
         this.right = values[1];
         setName("%" + basicBlock.getRegNumAndPlus());
-        setType(left.getType());
+        setType(this.left.getType());
         if (isCond()) {
             setType(IntegerType.I1);
         }
@@ -59,10 +53,17 @@ public class BinaryInst extends Instruction {
         return this.isSlt() || this.isSle() || this.isSge() || this.isSgt() || this.isEq() || this.isNe();
     }
 
+    public String isNsw() {
+        if (this.getOperator() == Operator.Add || this.getOperator() == Operator.Mul || this.getOperator() == Operator.Sub) {
+            return "nsw ";
+        }
+        return "";
+    }
+
     @Override
     public void print() {
         if (getOperator() == Operator.Add || getOperator() == Operator.Mul || getOperator() == Operator.Sub || getOperator() == Operator.Sdiv || getOperator() == Operator.Srem) {
-            IO.dealLLVMGeneration("    " + super.getName() + " = " + super.getOperator().toString().toLowerCase() + " nsw ");
+            IO.dealLLVMGeneration("    " + super.getName() + " = " + super.getOperator().toString().toLowerCase() + " " +  isNsw());
         } else if (getOperator() == Operator.Eq || getOperator() == Operator.Ne || getOperator() == Operator.Slt || getOperator() == Operator.Sgt || getOperator() == Operator.Sle || getOperator() == Operator.Sge) {
             IO.dealLLVMGeneration("    " + super.getName() + " = icmp " + super.getOperator().toString().toLowerCase() + " ");
         }
