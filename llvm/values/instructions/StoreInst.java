@@ -1,6 +1,5 @@
 package llvm.values.instructions;
 
-import llvm.types.PointerType;
 import llvm.types.Type;
 import llvm.values.Instruction;
 import llvm.values.Value;
@@ -18,7 +17,7 @@ public class StoreInst extends Instruction {
         super(Operator.Store);
         this.value = value;
         this.addr = addr;
-        this.addrType = new PointerType(addr.getType());
+        this.addrType = addr.getType();
     }
 
     @Override

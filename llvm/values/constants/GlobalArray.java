@@ -1,6 +1,7 @@
 package llvm.values.constants;
 
 import llvm.types.ArrayType;
+import llvm.types.PointerType;
 import llvm.types.Type;
 import llvm.values.Constant;
 import llvm.values.Value;
@@ -15,13 +16,17 @@ public class GlobalArray extends Constant {
 
     private int capacity;
 
+    private Type AllocType;
+
     private Type elememtType;
 
     private List<Value> array;
 
     public GlobalArray(String name, Boolean isConst, int capacity, Type elememtType) {
         super(name, null);
-        setType(new ArrayType(elememtType, capacity));
+        ArrayType arrayType = new ArrayType(elememtType, capacity);
+        setType(new PointerType(arrayType));
+        this.AllocType = arrayType;
         this.isConst = isConst;
         this.capacity = capacity;
         this.elememtType = elememtType;
@@ -35,6 +40,14 @@ public class GlobalArray extends Constant {
             }
         }
         return false;
+    }
+
+    public Type getElememtType() {
+        return elememtType;
+    }
+
+    public Type getAllocType() {
+        return AllocType;
     }
 
     public String getName() {
@@ -52,7 +65,7 @@ public class GlobalArray extends Constant {
         } else {
             IO.dealLLVMGeneration("@" + super.getName() + " = dso_local global ");
         }
-        IO.dealLLVMGeneration(this.getType().toString());
+        IO.dealLLVMGeneration(this.AllocType + " ");
         if (allZero()) {
             IO.dealLLVMGeneration("zeroinitializer");
         }

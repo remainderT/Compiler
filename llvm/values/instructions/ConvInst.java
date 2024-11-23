@@ -15,13 +15,12 @@ public class ConvInst extends Instruction {
 
     private Type to;
 
-    public ConvInst(BasicBlock basicBlock, Operator op, Value value){
+    public ConvInst(BasicBlock basicBlock, Operator op, Value value, IntegerType fromType, IntegerType toType) {
         super(op);
         setName("%" + basicBlock.getRegNumAndPlus());
-        Type type = op == Operator.Trunc ? IntegerType.I8 : IntegerType.I32;
-        setType(type);
-        this.from = value.getType();
-        this.to = type;
+        setType(toType);
+        this.from = fromType;
+        this.to = toType;
         this.value = value;
     }
 

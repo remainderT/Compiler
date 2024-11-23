@@ -66,10 +66,10 @@ public class ValueFactory {
         basicBlock.addInstruction(inst);
     }
 
-    public static ConvInst buildConvInst(BasicBlock basicBlock, Value value) {
+    public static ConvInst buildConvInst(BasicBlock basicBlock, Value value, IntegerType fromType, IntegerType toType) {
         Type from = value.getType();
         Operator op = from == IntegerType.I32 ? Operator.Trunc : Operator.Zext;
-        ConvInst inst = new ConvInst(basicBlock, op, value);
+        ConvInst inst = new ConvInst(basicBlock, op, value, fromType, toType);
         basicBlock.addInstruction(inst);
         return inst;
     }
@@ -98,15 +98,13 @@ public class ValueFactory {
     }
 
     public static Value[] checkTypeConversion(BasicBlock basicBlock, Value left, Value right) {
-        if (left.getType() == IntegerType.I32 && right.getType() == IntegerType.I8) {
-            return new Value[]{left, buildConvInst(basicBlock, right)};
-        } else if (left.getType() == IntegerType.I8 && right.getType() == IntegerType.I32) {
-            return new Value[]{buildConvInst(basicBlock, left), right};
-        } else if (left.getType() == IntegerType.I8 && right.getType() == IntegerType.I8) {
-            return new Value[]{buildConvInst(basicBlock, left), buildConvInst(basicBlock, right)};
-        } else {
-            return new Value[]{left, right};
+        if (left.getType() != IntegerType.I32) {
+            left = buildConvInst(basicBlock, left, (IntegerType) left.getType(), IntegerType.I32);
         }
+        if (right.getType() != IntegerType.I32) {
+            right = buildConvInst(basicBlock, right, (IntegerType) right.getType(), IntegerType.I32);
+        }
+        return new Value[]{left, right};
     }
 
     public static void buildBrInst(BasicBlock fromBlock, BasicBlock trueBlock, BasicBlock falseBlock, Value condition) {
@@ -120,6 +118,60 @@ public class ValueFactory {
     public static void buildBrInst(BasicBlock fromBlock, BasicBlock trueBlock) {
         BrInst inst = new BrInst(fromBlock, trueBlock);
         fromBlock.addInstruction(inst);
+    }
+
+    public static int getChar2Int(String s) {
+        if (s.charAt(1) != '\\') {
+            return s.charAt(1);
+        }
+        if (s.charAt(2) == 'a') {
+            return 7;
+        } else if (s.charAt(2) == 'b') {
+            return 8;
+        } else if (s.charAt(2) == 't') {
+            return 9;
+        } else if (s.charAt(2) == 'n') {
+            return 10;
+        } else if (s.charAt(2) == 'v') {
+            return 11;
+        } else if (s.charAt(2) == 'f') {
+            return 12;
+        } else if (s.charAt(2) == '\"') {
+            return 34;
+        } else if (s.charAt(2) == '\'') {
+            return 39;
+        } else if (s.charAt(2) == '\\') {
+            return 92;
+        } else {
+            return 0;
+        }
+    }
+
+    public static int getChar2Int(String s,int i) {
+        if (s.charAt(i) != '\\') {
+            return s.charAt(i);
+        }
+        if (s.charAt(i + 1) == 'a') {
+            return 7;
+        } else if (s.charAt(i + 1) == 'b') {
+            return 8;
+        } else if (s.charAt(i + 1) == 't') {
+            return 9;
+        } else if (s.charAt(i + 1) == 'n') {
+            return 10;
+        } else if (s.charAt(i + 1) == 'v') {
+            return 11;
+        } else if (s.charAt(i + 1) == 'f') {
+            return 12;
+        } else if (s.charAt(i + 1) == '\"') {
+            return 34;
+        } else if (s.charAt(i + 1) == '\'') {
+            return 39;
+        } else if (s.charAt(i + 1) == '\\') {
+            return 92;
+        } else {
+            return 0;
+        }
     }
 
 }
