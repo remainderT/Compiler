@@ -1,7 +1,7 @@
 package syntaxNode;
 
 import common.BasciNode;
-import frontend.Token;
+import common.Token;
 import util.IO;
 
 public class BType implements BasciNode {

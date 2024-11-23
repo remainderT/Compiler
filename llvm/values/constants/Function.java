@@ -28,6 +28,10 @@ public class Function extends Constant {
         this.paramTypes = ((FunctionType) type).getParamTypes();
     }
 
+    public List<Type> getParamTypes() {
+        return paramTypes;
+    }
+
     public void addBlock(BasicBlock block) {
         blocks.add(block);
     }

@@ -4,6 +4,7 @@ import common.Error;
 import common.ErrorType;
 import common.ParamType;
 import common.SemanticType;
+import common.Token;
 import symbol.FuncSymbolTable;
 import symbol.Symbol;
 import symbol.SymbolTable;

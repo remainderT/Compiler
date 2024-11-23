@@ -2,6 +2,7 @@ package frontend;
 
 import common.Error;
 import common.ErrorType;
+import common.Token;
 import common.TokenType;
 
 import java.util.ArrayList;

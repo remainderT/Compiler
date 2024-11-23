@@ -5,7 +5,7 @@ package util;
 import common.Error;
 import frontend.Semantic;
 import frontend.Syntax;
-import frontend.Token;
+import common.Token;
 import llvm.IRModule;
 import symbol.Symbol;
 import symbol.SymbolTable;

@@ -1,5 +1,6 @@
 package llvm.values.constants;
 
+import llvm.types.PointerType;
 import llvm.types.Type;
 import llvm.values.Constant;
 import llvm.values.Value;
@@ -12,7 +13,7 @@ public class GlobalVar extends Constant {
     private Value value;
 
     public GlobalVar(String name, Type type, boolean isConst, Value value) {
-        super(name, type);
+        super(name, new PointerType(type));
         this.isConst = isConst;
         this.value = value;
         if (value.getType() != type) {    // 类型转换
@@ -26,6 +27,10 @@ public class GlobalVar extends Constant {
 
     public int getVal() {
         return ((IntConst) value).getValue();
+    }
+
+    public Type getAllocaType() {
+        return value.getType();
     }
 
     @Override

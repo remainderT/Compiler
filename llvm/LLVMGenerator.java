@@ -1,8 +1,13 @@
 package llvm;
 
 import common.TokenType;
-import frontend.Token;
-import llvm.types.*;
+import common.Token;
+import llvm.types.ArrayType;
+import llvm.types.FunctionType;
+import llvm.types.IntegerType;
+import llvm.types.PointerType;
+import llvm.types.Type;
+import llvm.types.VoidType;
 import llvm.values.Arguement;
 import llvm.values.BasicBlock;
 import llvm.values.Instruction;
@@ -12,8 +17,37 @@ import llvm.values.constants.GlobalArray;
 import llvm.values.constants.GlobalVar;
 import llvm.values.constants.IntConst;
 import llvm.values.instructions.AllocaInst;
+import llvm.values.instructions.GepInst;
 import llvm.values.instructions.Operator;
-import syntaxNode.*;
+import syntaxNode.AddExp;
+import syntaxNode.Block;
+import syntaxNode.BlockItem;
+import syntaxNode.CompUnit;
+import syntaxNode.Cond;
+import syntaxNode.ConstDecl;
+import syntaxNode.ConstDef;
+import syntaxNode.ConstExp;
+import syntaxNode.ConstInitVal;
+import syntaxNode.Decl;
+import syntaxNode.EqExp;
+import syntaxNode.Exp;
+import syntaxNode.ForStmt;
+import syntaxNode.FuncDef;
+import syntaxNode.FuncFParam;
+import syntaxNode.FuncFParams;
+import syntaxNode.FuncRParams;
+import syntaxNode.InitVal;
+import syntaxNode.LAndExp;
+import syntaxNode.LOrExp;
+import syntaxNode.LVal;
+import syntaxNode.MainFuncDef;
+import syntaxNode.MulExp;
+import syntaxNode.PrimaryExp;
+import syntaxNode.RelExp;
+import syntaxNode.Stmt;
+import syntaxNode.UnaryExp;
+import syntaxNode.VarDecl;
+import syntaxNode.VarDef;
 import util.ValueFactory;
 
 import java.util.ArrayList;
@@ -62,6 +96,8 @@ public class LLVMGenerator {
 
     private Boolean isConst;
 
+    private Boolean isFuncParamArray;
+
     private Type currentType;
 
     public LLVMGenerator(CompUnit compUnit) {
@@ -75,6 +111,7 @@ public class LLVMGenerator {
     public void init() {
         isGlobal = true;
         isConst = false;
+        isFuncParamArray = false;
         valueStack = new Stack<>();
         symbolTables = new ArrayList<>();
         currentSymbolTable = new LLVMSymbolTable(index++, null);
@@ -114,9 +151,7 @@ public class LLVMGenerator {
     public void gDecl(Decl decl) {
         // Decl -> ConstDecl | VarDecl
         if (decl.getConstDecl() != null) {
-            isConst = true;
             gConstDecl(decl.getConstDecl());
-            isConst = false;
         } else {
             gVarDecl(decl.getVarDecl());
         }
@@ -140,15 +175,17 @@ public class LLVMGenerator {
                 if (value != null) {
                     value.setType(currentType);
                 }
-                GlobalVar globalVar = ValueFactory.buildGlobalVar(name, currentType, isConst, value);
+                GlobalVar globalVar = ValueFactory.buildGlobalVar(name, currentType, true, value);
                 irModule.addGlobalValue(globalVar);
                 currentSymbolTable.put(name, globalVar);
             } else {
-                Instruction inst = ValueFactory.buildAllocaInst(currentBlock, currentType);
+                AllocaInst inst = ValueFactory.buildAllocaInst(currentBlock, currentType);
+                inst.setConst(true);
                 currentSymbolTable.put(name, inst);
                 if (value != null) {
+                    inst.setValue(((IntConst) value).getValue());
                     if (currentType != value.getType()) {
-                        value = ValueFactory.buildConvInst(currentBlock, value);
+                        value = ValueFactory.buildConvInst(currentBlock, value, (IntegerType) value.getType(), (IntegerType) currentType);
                     }
                     ValueFactory.buildStoreInst(currentBlock, value, inst);
                 }
@@ -158,7 +195,7 @@ public class LLVMGenerator {
                 gConstExp(constDef.getConstExp());
                 Value capacityValue = valueStack.pop();
                 int capacity = Integer.parseInt(capacityValue.getName());
-                GlobalArray globalArray = ValueFactory.buildGlobalArray(name, isConst, capacity, currentType);
+                GlobalArray globalArray = ValueFactory.buildGlobalArray(name, true, capacity, currentType);
                 if (constDef.getConstInitVal().getStringConst() == null) {
                     for (int i = 0; i < constDef.getConstInitVal().getConstExps().size(); i++) {
                         gConstExp(constDef.getConstInitVal().getConstExps().get(i));
@@ -193,13 +230,15 @@ public class LLVMGenerator {
                     for (int i = 0; i < constDef.getConstInitVal().getConstExps().size(); i++) {
                         gConstExp(constDef.getConstInitVal().getConstExps().get(i));
                         Value element = valueStack.pop();
-                        Instruction inst = ValueFactory.buildGepInst(currentBlock, array, element);
+                        Value offset = ValueFactory.buildIntConst(i, false);
+                        Instruction inst = ValueFactory.buildGepInst(currentBlock, array, offset);
                         ValueFactory.buildStoreInst(currentBlock, element, inst);
                         valueStack.add(inst);
                     }
                     for (int i = constDef.getConstInitVal().getConstExps().size(); i < capacity; i++) {
                         IntConst zero = ValueFactory.buildIntConst(0, false);
-                        Instruction inst = ValueFactory.buildGepInst(currentBlock, array, zero);
+                        Value offset = ValueFactory.buildIntConst(i, false);
+                        Instruction inst = ValueFactory.buildGepInst(currentBlock, array, offset);
                         ValueFactory.buildStoreInst(currentBlock, zero, inst);
                         valueStack.add(inst);
                     }
@@ -214,7 +253,7 @@ public class LLVMGenerator {
                         valueStack.add(inst);
                     }
                     for (int i = str.length(); i < capacity; i++) {
-                        IntConst zero = ValueFactory.buildIntConst(0, false);
+                        IntConst zero = ValueFactory.buildIntConst(0, true);
                         Value offset = ValueFactory.buildIntConst(i, false);
                         Instruction inst = ValueFactory.buildGepInst(currentBlock, array, offset);
                         ValueFactory.buildStoreInst(currentBlock, zero, inst);
@@ -239,7 +278,9 @@ public class LLVMGenerator {
 
     public void gConstExp(ConstExp constExp) {
         // ConstExp → AddExp
+        isConst = true;
         gAddExp(constExp.getAddExp());
+        isConst = false;
     }
 
     public void gVarDecl(VarDecl varDecl) {
@@ -261,7 +302,7 @@ public class LLVMGenerator {
                     value = valueStack.pop();
                     value.setType(currentType);
                 }
-                GlobalVar globalVar = ValueFactory.buildGlobalVar(name, currentType, isConst, value);
+                GlobalVar globalVar = ValueFactory.buildGlobalVar(name, currentType, false, value);
                 irModule.addGlobalValue(globalVar);
                 currentSymbolTable.put(name, globalVar);
             } else {
@@ -271,7 +312,7 @@ public class LLVMGenerator {
                     gInitVal(varDef.getInitVal());
                     Value value =  valueStack.pop();
                     if (currentType != value.getType()) {
-                        value = ValueFactory.buildConvInst(currentBlock, value);
+                        value = ValueFactory.buildConvInst(currentBlock, value, (IntegerType) value.getType(), (IntegerType) currentType);
                     }
                     ValueFactory.buildStoreInst(currentBlock, value, inst);
                 }
@@ -281,7 +322,7 @@ public class LLVMGenerator {
                 gConstExp(varDef.getConstExp());
                 Value capacityValue = valueStack.pop();
                 int capacity = Integer.parseInt(capacityValue.getName());
-                GlobalArray globalArray = ValueFactory.buildGlobalArray(name, isConst, capacity, currentType);
+                GlobalArray globalArray = ValueFactory.buildGlobalArray(name, false, capacity, currentType);
                 if (varDef.getInitVal() != null && varDef.getInitVal().getStringConst() == null) {
                     for (int i = 0; i < varDef.getInitVal().getExps().size(); i++) {
                         gExp(varDef.getInitVal().getExps().get(i));
@@ -294,12 +335,17 @@ public class LLVMGenerator {
                     }
                 } else if (varDef.getInitVal() != null && varDef.getInitVal().getStringConst() != null) {
                     String str = varDef.getInitVal().getStringConst().getContent();
+                    int cnt = 0;
                     for (int i = 1; i < str.length() - 1; i++) {
-                        int value = str.charAt(i);
+                        int value = ValueFactory.getChar2Int(str, i);
                         IntConst element = ValueFactory.buildIntConst(value, true);
                         globalArray.addElement(element);
+                        if (str.charAt(i) == '\\') {
+                            i++;
+                        }
+                        cnt++;
                     }
-                    for (int i = str.length() - 2; i < capacity; i++) {
+                    for (int i = cnt; i < capacity; i++) {
                         IntConst zero = ValueFactory.buildIntConst(0, true);
                         globalArray.addElement(zero);
                     }
@@ -324,7 +370,7 @@ public class LLVMGenerator {
                             gExp(varDef.getInitVal().getExps().get(i));
                             Value element = valueStack.pop();
                             if (currentType == IntegerType.I8 && element.getType() == IntegerType.I32) {
-                                element = ValueFactory.buildConvInst(currentBlock, element);
+                                element = ValueFactory.buildConvInst(currentBlock, element, IntegerType.I32, IntegerType.I8);
                             }
                             Value offset = ValueFactory.buildIntConst(i, false);
                             Instruction inst = ValueFactory.buildGepInst(currentBlock, array, offset);
@@ -332,24 +378,32 @@ public class LLVMGenerator {
                             valueStack.add(inst);
                         }
                         for (int i = varDef.getInitVal().getExps().size(); i < capacity; i++) {
-                            IntConst zero = ValueFactory.buildIntConst(0, false);
-                            Instruction inst = ValueFactory.buildGepInst(currentBlock, array, zero);
+                            boolean isChar = currentType == IntegerType.I8;
+                            IntConst zero = ValueFactory.buildIntConst(0, isChar);
+                            Value offset = ValueFactory.buildIntConst(i, false);
+                            Instruction inst = ValueFactory.buildGepInst(currentBlock, array, offset);
                             ValueFactory.buildStoreInst(currentBlock, zero, inst);
                             valueStack.add(inst);
                         }
                     } else {
                         String str = varDef.getInitVal().getStringConst().getContent();
-                        str = str.substring(1, str.length() - 1);
-                        for (int i = 0; i < str.length(); i++) {
-                            IntConst element = ValueFactory.buildIntConst(str.charAt(i), true);
-                            Value offset = ValueFactory.buildIntConst(i, false);
+                        int cnt = 0;
+                        for (int i = 1; i < str.length()-1; i++) {
+                            int value = ValueFactory.getChar2Int(str, i);
+                            if (str.charAt(i) == '\\') {
+                                i++;
+                            }
+                            IntConst element = ValueFactory.buildIntConst(value, true);
+                            Value offset = ValueFactory.buildIntConst(cnt, false);
                             Instruction inst = ValueFactory.buildGepInst(currentBlock, array, offset);
                             ValueFactory.buildStoreInst(currentBlock, element, inst);
                             valueStack.add(inst);
+                            cnt++;
                         }
-                        for (int i = str.length(); i < capacity; i++) {
-                            IntConst zero = ValueFactory.buildIntConst(0, false);
-                            Instruction inst = ValueFactory.buildGepInst(currentBlock, array, zero);
+                        for (int i = cnt; i < capacity; i++) {
+                            IntConst zero = ValueFactory.buildIntConst(0, true);
+                            Value offset = ValueFactory.buildIntConst(i, false);
+                            Instruction inst = ValueFactory.buildGepInst(currentBlock, array, offset);
                             ValueFactory.buildStoreInst(currentBlock, zero, inst);
                             valueStack.add(inst);
                         }
@@ -479,8 +533,9 @@ public class LLVMGenerator {
             Value addr = valueStack.pop();
             gExp(stmt.getExps().get(0));
             Value value = valueStack.pop();
-            if (value.getType() != addr.getType()) {
-                value = ValueFactory.buildConvInst(currentBlock, value);
+            Type allocType = getAllocaType(addr);
+            if (value.getType() != allocType) {
+                value = ValueFactory.buildConvInst(currentBlock, value, (IntegerType) value.getType(), (IntegerType) allocType);
             }
             ValueFactory.buildStoreInst(currentBlock, value, addr);
         } else if (stmt.getType() == Exp) {
@@ -495,7 +550,7 @@ public class LLVMGenerator {
                 gExp(stmt.getExps().get(0));
                 value = valueStack.pop();
                 if (value.getType() != currentFunction.getReturnType()) {
-                    value = ValueFactory.buildConvInst(currentBlock, value);
+                    value = ValueFactory.buildConvInst(currentBlock, value, (IntegerType) value.getType(), (IntegerType) currentFunction.getReturnType());
                 }
             }
             ValueFactory.buildRetInst(currentBlock, value);
@@ -599,15 +654,15 @@ public class LLVMGenerator {
                 ValueFactory.buildBrInst(currentBlock,nowForLoopEnd);
             }
         } else if (stmt.getType() == LValAssignGetint) {
-            LVal lVal = stmt.getLVal();
-            Value addr = getValue(lVal.getIdent().getContent());
+            gLVal(stmt.getLVal());
+            Value addr = valueStack.pop();
             Instruction inst = ValueFactory.buildCallInst(currentBlock, (Function) getValue("getint"),new ArrayList<>());
             ValueFactory.buildStoreInst(currentBlock, inst, addr);
         } else if (stmt.getType() == LValAssignGetchar) {
-            LVal lVal = stmt.getLVal();
-            Value addr = getValue(lVal.getIdent().getContent());
+            gLVal(stmt.getLVal());
+            Value addr = valueStack.pop();
             Instruction inst1 = ValueFactory.buildCallInst(currentBlock, (Function) getValue("getchar"),new ArrayList<>());
-            Instruction inst2 = ValueFactory.buildConvInst(currentBlock, inst1);
+            Instruction inst2 = ValueFactory.buildConvInst(currentBlock, inst1, IntegerType.I32, IntegerType.I8);
             ValueFactory.buildStoreInst(currentBlock, inst2, addr);
         } else if (stmt.getType() == Printf) {
             String format = stmt.getStrcon().getContent();
@@ -619,7 +674,7 @@ public class LLVMGenerator {
                     gExp(stmt.getExps().get(paramIndex++));
                     Value value = valueStack.pop();
                     if (value.getType() == IntegerType.I8) {
-                        value = ValueFactory.buildConvInst(currentBlock, value);
+                        value = ValueFactory.buildConvInst(currentBlock, value, IntegerType.I8, IntegerType.I32);
                     }
                     params.add(value);
                     if (format.charAt(i+1) == 'd') {
@@ -644,8 +699,9 @@ public class LLVMGenerator {
         gExp(exp);
         Value value = valueStack.pop();
         Value addr = getValue(lVal.getIdent().getContent());
-        if (value.getType() != addr.getType()) {
-            value = ValueFactory.buildConvInst(currentBlock, value);
+        Type allocType = getAllocaType(addr);
+        if (value.getType() != allocType) {
+            value = ValueFactory.buildConvInst(currentBlock, value, (IntegerType) value.getType(), (IntegerType) allocType);
         }
         ValueFactory.buildStoreInst(currentBlock, value, addr);
     }
@@ -703,7 +759,7 @@ public class LLVMGenerator {
         } else if (unaryExp.getIdent() != null) {
             Function function = ((Function) getValue(unaryExp.getIdent().getContent()));
             ArrayList<Value> params = new ArrayList<>();
-            gFuncRParams(unaryExp.getFuncRParams(), params);
+            gFuncRParams(unaryExp.getFuncRParams(), params, function.getParamTypes());
             Instruction inst = ValueFactory.buildCallInst(currentBlock, function, params);
             if (function.getType() != VoidType.Void) {
                 valueStack.add(inst);
@@ -729,11 +785,15 @@ public class LLVMGenerator {
         }
     }
 
-    public void gFuncRParams(FuncRParams funcRParams, ArrayList<Value> params) {
+    public void gFuncRParams(FuncRParams funcRParams, ArrayList<Value> params, List<Type> paramTypes) {
         // FuncRParams → Exp { ',' Exp }
         for (int i = 0;i < funcRParams.getExps().size(); i++) {
             Exp exp = funcRParams.getExps().get(i);
+            if (paramTypes.get(i) instanceof PointerType) {
+                isFuncParamArray = true;
+            }
             gExp(exp);
+            isFuncParamArray = false;
             Value value = valueStack.pop();
             params.add(value);
         }
@@ -745,14 +805,16 @@ public class LLVMGenerator {
             gExp(primaryExp.getExp());
         } else if (primaryExp.getLVal() != null) {
             gLVal(primaryExp.getLVal());
-            Value inst1 = valueStack.pop();
-            Instruction inst2 = ValueFactory.buildLoadInst(currentBlock, inst1);
-            valueStack.add(inst2);
+            if (!isGlobal && !isConst && !isFuncParamArray) {
+                Value inst1 = valueStack.pop();
+                Instruction inst2 = ValueFactory.buildLoadInst(currentBlock, inst1);
+                valueStack.add(inst2);
+            }
         } else if (primaryExp.getNumber() != null) {
             int value = Integer.parseInt(primaryExp.getNumber().getIntcon().getContent());
             valueStack.add(ValueFactory.buildIntConst(value, false));
         } else {
-            int value = primaryExp.getCharacter().getChrcon().getContent().charAt(1);    // "'c'"
+            int value = ValueFactory.getChar2Int(primaryExp.getCharacter().getChrcon().getContent());
             valueStack.add(ValueFactory.buildIntConst(value, true));
         }
     }
@@ -843,25 +905,31 @@ public class LLVMGenerator {
         // LVal → Ident ['[' Exp ']']
         if (isConst || isGlobal) {
             Value value = getValue(lVal.getIdent().getContent());
-            value = ValueFactory.buildIntConst(((GlobalVar) value).getVal(), false);
+            if (value instanceof GlobalVar) {
+                value = ValueFactory.buildIntConst(((GlobalVar) value).getVal(), false);
+            } else if (value instanceof AllocaInst) {
+                value = ValueFactory.buildIntConst(((AllocaInst) value).getValue(), false);
+            }
             valueStack.add(value);
         }
         else {
-            if (lVal.getDimension() == 0) {
+            if (lVal.getDimension() == 0) {  // a
                 Value value = getValue(lVal.getIdent().getContent());
-                if (value.getType() instanceof ArrayType) {
+                if (value.getType() instanceof PointerType && !(((PointerType) value.getType()).getPointTo() instanceof IntegerType)) { // a是数组
+                    if (value instanceof AllocaInst && ((AllocaInst) value).getAllocaType() instanceof PointerType) {    // a是数组函数参数
+                        value = ValueFactory.buildLoadInst(currentBlock, value);
+                    }
                     value= ValueFactory.buildGepInst(currentBlock, value, ValueFactory.buildIntConst(0, false));
-                    value.setType(new PointerType(value.getType()));
                 }
                 valueStack.add(value);
-            } else {
+            } else {     // a[i]
                 gAddExp(lVal.getExp().getAddExp());
                 Value array = getValue(lVal.getIdent().getContent());
-                if (array.getType() instanceof PointerType) {
+                Value offset = valueStack.pop();
+                if (array instanceof AllocaInst && ((AllocaInst) array).getAllocaType() instanceof PointerType) { // a[]
                     array = ValueFactory.buildLoadInst(currentBlock, array);
                 }
-                Value value = valueStack.pop();
-                value = ValueFactory.buildGepInst(currentBlock, array, value);
+                Value value = ValueFactory.buildGepInst(currentBlock, array, offset);
                 valueStack.add(value);
             }
         }
@@ -892,6 +960,19 @@ public class LLVMGenerator {
             tmp = tmp.getFather();
         }
         return null;
+    }
+
+    // 获得对应地址所存储的值的类型
+    public Type getAllocaType(Value addr) {
+        Type allocType = null;
+        if (addr instanceof AllocaInst) {
+            allocType = ((AllocaInst) addr).getAllocaType();
+        } else if (addr instanceof GlobalVar) {
+            allocType = ((GlobalVar) addr).getAllocaType();
+        } else if (addr instanceof GepInst) {
+            allocType = ((GepInst) addr).getAllocaType();
+        }
+        return allocType;
     }
 
 }

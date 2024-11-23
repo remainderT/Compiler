@@ -1,8 +1,5 @@
 package llvm.types;
 
-import java.io.FileWriter;
-import java.io.IOException;
-
 public class ArrayType implements Type {
 
     private Type elementType;
@@ -24,7 +21,7 @@ public class ArrayType implements Type {
 
     @Override
     public String toString()  {
-        return "[ " + capacity + " x " + elementType.toString() + " ]";
+        return "[" + capacity + " x " + elementType.toString() + "]";
 
     }
 }
