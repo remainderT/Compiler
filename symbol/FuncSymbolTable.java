@@ -1,6 +1,6 @@
 package symbol;
 
-import frontend.Token;
+import common.Token;
 
 public class FuncSymbolTable extends SymbolTable {
     private Token returnType; // 0 int, 1 char, 2 void

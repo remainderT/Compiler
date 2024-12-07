@@ -4,6 +4,7 @@ import common.Error;
 import common.ErrorType;
 import common.StmtTpye;
 import common.SyntaxType;
+import common.Token;
 import common.TokenType;
 import syntaxNode.AddExp;
 import syntaxNode.BType;

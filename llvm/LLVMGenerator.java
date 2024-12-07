@@ -1,7 +1,7 @@
 package llvm;
 
 import common.TokenType;
-import frontend.Token;
+import common.Token;
 import llvm.types.ArrayType;
 import llvm.types.FunctionType;
 import llvm.types.IntegerType;

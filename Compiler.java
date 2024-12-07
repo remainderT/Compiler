@@ -2,7 +2,7 @@ import common.Error;
 import frontend.Lexer;
 import frontend.Semantic;
 import frontend.Syntax;
-import frontend.Token;
+import common.Token;
 import llvm.IRModule;
 import llvm.LLVMGenerator;
 import util.IO;

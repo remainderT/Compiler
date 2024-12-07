@@ -3,7 +3,7 @@ package syntaxNode;
 import common.BasciNode;
 import common.StmtTpye;
 import common.SyntaxType;
-import frontend.Token;
+import common.Token;
 import util.IO;
 
 import java.util.List;

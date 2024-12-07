@@ -1,6 +1,4 @@
-package frontend;
-
-import common.TokenType;
+package common;
 
 public class Token {
 
