@@ -22,7 +22,9 @@ public class Compiler {
         Semantic semantic = new Semantic(syntax.getCompUnit(), errors);
         semantic.fCompUnit();
         LLVMGenerator generator = new LLVMGenerator(semantic.getCompUnit());
-        generator.Generate();
+        if (errors.isEmpty()) {
+            generator.Generate();
+        }
         IRModule module = IRModule.getInstance();
         if (errors.isEmpty()) {
             IO.dealStdout(module, semantic, syntax);
